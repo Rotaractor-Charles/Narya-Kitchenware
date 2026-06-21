@@ -148,22 +148,6 @@ export default function CartDrawer() {
         {items.length > 0 && (
           <div className="border-t border-earth/10 px-5 pt-4 pb-5 space-y-3 bg-white">
 
-            {/* Trust bar */}
-            <div className="flex items-center justify-between py-2 px-3 bg-ivory-dark rounded-lg">
-              <div className="flex items-center gap-1.5">
-                <div className="flex gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <svg key={i} width="10" height="10" viewBox="0 0 24 24" fill="#3A6B4A" stroke="none">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                    </svg>
-                  ))}
-                </div>
-                <span className="text-[11px] font-semibold text-earth">Excellent</span>
-                <span className="text-[10px] text-earth/40">4.8 / 5</span>
-              </div>
-              <span className="text-[10px] text-earth/50 italic">Verified reviews</span>
-            </div>
-
             {/* Coupon */}
             <div className="flex gap-0">
               <input
@@ -177,25 +161,6 @@ export default function CartDrawer() {
               </button>
             </div>
 
-            {/* Shipping progress */}
-            <div>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-earth/55">Shipping</span>
-                <span className={shipping === 0 ? 'text-terra font-semibold' : 'text-earth'}>
-                  {shipping === 0 ? 'Free' : `KSh ${shipping.toLocaleString()}`}
-                </span>
-              </div>
-              <div className="h-1 bg-earth/10 rounded-full overflow-hidden mb-1">
-                <div className="h-full bg-terra rounded-full transition-all" style={{ width: `${freePct}%` }} />
-              </div>
-              <p className="text-[10px] text-earth/45">
-                {toFree > 0
-                  ? <>Add <span className="text-terra font-semibold">KSh {toFree.toLocaleString()}</span> more for free shipping</>
-                  : <span className="text-terra font-semibold">You qualify for free shipping!</span>
-                }
-              </p>
-            </div>
-
             {/* Totals */}
             <div className="flex justify-between text-sm font-semibold text-earth pt-1 border-t border-earth/8">
               <span>Total</span>
@@ -204,7 +169,7 @@ export default function CartDrawer() {
 
             {/* Points pill */}
             <div className="bg-earth rounded-lg px-3 py-2 flex items-center justify-between">
-              <span className="text-[10px] text-sienna/80 uppercase tracking-widest">You'll earn</span>
+              <span className="text-[10px] text-white tracking-widest">You'll Earn</span>
               <span className="text-ivory text-xs font-semibold">+{pointsEarned} Narya Points</span>
             </div>
 

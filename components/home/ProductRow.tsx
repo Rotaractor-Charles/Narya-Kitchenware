@@ -10,6 +10,23 @@ export type ProductCard = {
   image: string
   badge?: string
   stock?: number
+  rating?: number
+  reviews?: number
+}
+
+function Stars({ rating }: { rating: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1,2,3,4,5].map(n => (
+        <svg key={n} viewBox="0 0 12 12" width="10" height="10"
+          fill={n <= Math.round(rating) ? 'currentColor' : 'none'}
+          stroke="currentColor" strokeWidth="1"
+          className={n <= Math.round(rating) ? 'text-amber-400' : 'text-forest/20'}>
+          <polygon points="6,1 7.5,4.5 11,5 8.5,7.5 9,11 6,9.5 3,11 3.5,7.5 1,5 4.5,4.5"/>
+        </svg>
+      ))}
+    </div>
+  )
 }
 
 type Props = {
@@ -53,12 +70,20 @@ function ProductCardEl({ product }: { product: ProductCard }) {
         )}
       </div>
       <p className="text-xs text-forest leading-snug line-clamp-2 mb-1">{product.name}</p>
-      <div className="flex items-baseline gap-1.5">
+      <div className="flex items-baseline gap-1.5 mb-1">
         <span className="text-sm font-semibold text-forest">${product.price.toFixed(2)}</span>
         {product.originalPrice && (
           <span className="text-xs text-forest/40 line-through">${product.originalPrice.toFixed(2)}</span>
         )}
       </div>
+      {product.rating && (
+        <div className="flex items-center gap-1">
+          <Stars rating={product.rating} />
+          {product.reviews && (
+            <span className="text-[10px] text-forest/40">({product.reviews})</span>
+          )}
+        </div>
+      )}
     </Link>
   )
 }

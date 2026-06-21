@@ -1,5 +1,24 @@
 import Link from 'next/link'
 
+function LogoMark() {
+  return (
+    <svg viewBox="0 0 48 64" width="17" height="23" aria-hidden="true" className="shrink-0">
+      <g transform="translate(24 44)" stroke="#F5F0E8" strokeWidth="3.5" strokeLinecap="round" fill="none">
+        <g transform="rotate(20)">
+          <line x1="0" y1="0" x2="0" y2="-30" />
+          <line x1="-3.5" y1="-30" x2="-3.5" y2="-38" />
+          <line x1="0"    y1="-30" x2="0"    y2="-40" />
+          <line x1="3.5"  y1="-30" x2="3.5"  y2="-38" />
+        </g>
+        <g transform="rotate(-20)">
+          <line x1="0" y1="0" x2="0" y2="-28" />
+          <ellipse cx="0" cy="-34" rx="5" ry="7" />
+        </g>
+      </g>
+    </svg>
+  )
+}
+
 const SHOP_LINKS = [
   { href: '/shop',             label: 'All Products'       },
   { href: '/shop/cookware',    label: 'Cookware'           },
@@ -38,9 +57,12 @@ function NavList({ links }: { links: { href: string; label: string }[] }) {
 
 function ColHeading({ children }: { children: string }) {
   return (
-    <h3 className="text-[10px] font-semibold tracking-widest uppercase text-sienna">
-      {children}
-    </h3>
+    <div>
+      <h3 className="text-[10px] font-semibold tracking-widest uppercase text-white">
+        {children}
+      </h3>
+      <div className="mt-1.5 h-[1.5px] w-12 bg-white/60 rounded-full" />
+    </div>
   )
 }
 
@@ -50,8 +72,11 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 pt-10 pb-7">
 
         {/* Brand — sits above the link grid on mobile, hidden on desktop (shown in grid) */}
-        <div className="md:hidden mb-7">
-          <span className="font-serif tracking-[0.22em] text-ivory text-base block mb-2">NARYA</span>
+        <div className="md:hidden mb-7 flex flex-col items-center text-center">
+          <div className="flex items-center gap-2 mb-2">
+            <LogoMark />
+            <span className="font-serif tracking-[0.25em] text-ivory text-[23px] select-none">NARYA</span>
+          </div>
           <p className="text-xs leading-relaxed text-ivory/45 max-w-xs">
             Premium kitchenware made to last. Craft your kitchen. Love your cooking.
           </p>
@@ -62,7 +87,10 @@ export default function Footer() {
 
           {/* Brand column — desktop only */}
           <div className="hidden md:block">
-            <span className="font-serif tracking-[0.22em] text-ivory text-base block mb-3">NARYA</span>
+            <div className="flex items-center gap-2 mb-3">
+              <LogoMark />
+              <span className="font-serif tracking-[0.25em] text-ivory text-[23px] select-none">NARYA</span>
+            </div>
             <p className="text-xs leading-relaxed text-ivory/45 max-w-[180px]">
               Premium kitchenware made to last. Craft your kitchen. Love your cooking.
             </p>

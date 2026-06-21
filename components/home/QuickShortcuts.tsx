@@ -9,9 +9,7 @@ const SHORTCUTS = [
   { href: '/shop/cutlery',              label: 'Knife sets',              emoji: '🔪' },
   { href: '/shop/appliances?sale=true', label: 'Appliance deals',         emoji: '⚡' },
   { href: '/shop/new',                  label: 'New arrivals',            emoji: '✨' },
-  { href: '/shop/gift-sets',            label: 'Gift sets',               emoji: '🎁' },
   { href: '/shop/sale',                 label: 'Clearance',               emoji: '🏷️' },
-  { href: '/shop?free-shipping=true',   label: 'Free shipping over $75',  emoji: '🚚' },
 ]
 
 const SCROLL_AMOUNT = 320
@@ -53,7 +51,7 @@ export default function QuickShortcuts() {
         <div
           ref={ref}
           onScroll={update}
-          className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide scroll-smooth"
+          className="flex justify-center gap-3 overflow-x-auto pb-2 scrollbar-hide scroll-smooth"
         >
           {SHORTCUTS.map(({ href, label, emoji }) => (
             <Link
