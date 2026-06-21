@@ -1,0 +1,32 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#E8EDE0"/>
+  <!-- Shadow -->
+  <ellipse cx="200" cy="346" rx="128" ry="12" fill="rgba(28,46,28,0.11)"/>
+  <!-- Pan bottom face -->
+  <path d="M72 260 L328 260 L298 340 L102 340 Z" fill="#A8B0A0"/>
+  <!-- Pan front face -->
+  <path d="M72 180 L328 180 L328 260 L72 260 Z" fill="#B8C2B0"/>
+  <path d="M72 180 L328 180 L328 185 L72 185 Z" fill="rgba(255,255,255,0.15)"/>
+  <!-- Pan left face -->
+  <path d="M72 180 L102 160 L102 340 L72 260 Z" fill="#8A9285"/>
+  <!-- Pan right face -->
+  <path d="M328 180 L298 160 L298 340 L328 260 Z" fill="#8A9285"/>
+  <!-- Pan top (opening) -->
+  <path d="M102 160 L298 160 L328 180 L72 180 Z" fill="#C8D0C0"/>
+  <!-- Inner pan -->
+  <path d="M85 183 L315 183 L315 255 L85 255 Z" fill="#2A2A2A"/>
+  <!-- Non-stick surface -->
+  <path d="M85 183 L315 183 L315 255 L85 255 Z" fill="#1e1e1e"/>
+  <!-- Inner sheen -->
+  <path d="M85 183 L160 183 L160 255 L85 255 Z" fill="rgba(255,255,255,0.04)"/>
+  <!-- Rim detail -->
+  <path d="M72 180 L328 180" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+  <path d="M85 183 L315 183" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  <!-- Fluted sides texture -->
+  <path d="M72 195 L85 192" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+  <path d="M72 215 L85 212" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+  <path d="M72 235 L85 232" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+  <path d="M328 195 L315 192" stroke="rgba(0,0,0,0.08)" stroke-width="1.5"/>
+  <path d="M328 215 L315 212" stroke="rgba(0,0,0,0.08)" stroke-width="1.5"/>
+  <path d="M328 235 L315 232" stroke="rgba(0,0,0,0.08)" stroke-width="1.5"/>
+</svg>

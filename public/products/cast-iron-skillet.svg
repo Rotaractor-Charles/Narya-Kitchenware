@@ -1,0 +1,22 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#E8EDE0"/>
+  <!-- Drop shadow -->
+  <ellipse cx="190" cy="330" rx="115" ry="14" fill="rgba(28,46,28,0.12)"/>
+  <!-- Handle -->
+  <rect x="290" y="188" width="88" height="22" rx="11" fill="#2A2A2A"/>
+  <rect x="292" y="192" width="84" height="14" rx="7" fill="#383838"/>
+  <circle cx="308" cy="199" r="5" fill="#222"/>
+  <circle cx="308" cy="199" r="2" fill="#555"/>
+  <!-- Pan body -->
+  <ellipse cx="185" cy="210" rx="125" ry="118" fill="#232323"/>
+  <ellipse cx="185" cy="210" rx="125" ry="118" fill="none" stroke="#3a3a3a" stroke-width="3"/>
+  <!-- Rim highlight -->
+  <ellipse cx="185" cy="210" rx="125" ry="118" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
+  <!-- Inner cooking surface -->
+  <ellipse cx="185" cy="216" rx="98" ry="90" fill="#2e2e2e"/>
+  <!-- Seasoning texture rings -->
+  <ellipse cx="185" cy="216" rx="72" ry="66" fill="none" stroke="rgba(255,255,255,0.025)" stroke-width="1"/>
+  <ellipse cx="185" cy="216" rx="45" ry="41" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="1"/>
+  <!-- Sheen -->
+  <ellipse cx="148" cy="172" rx="32" ry="18" fill="rgba(255,255,255,0.055)" transform="rotate(-25,148,172)"/>
+</svg>

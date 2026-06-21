@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand colours — Sage & Stone palette */
+  --color-earth:      #1C2E1C;   /* deep stone — dark text, utility bar, footer  */
+  --color-terra:      #3A6B4A;   /* vivid sage — primary brand / CTAs            */
+  --color-sienna:     #6BAF82;   /* fresh green — accents, hover states          */
+  --color-ivory:      #F5F7F0;   /* stone white — page background                */
+  --color-ivory-dark: #E8EDE0;   /* slightly darker stone — cards, inputs        */
+
+  /* Legacy aliases so existing classes keep working */
+  --color-forest: var(--color-earth);
+  --color-cream:  var(--color-ivory);
+
+  /* Typography */
+  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-sans:  var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+}
+
+/* Base */
+body {
+  background-color: var(--color-ivory);
+  color: var(--color-earth);
+  font-family: var(--font-sans);
+}
+
+/* Hide scrollbar while keeping scroll behaviour */
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}

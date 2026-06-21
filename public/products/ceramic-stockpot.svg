@@ -1,0 +1,27 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#E8EDE0"/>
+  <!-- Shadow -->
+  <ellipse cx="200" cy="342" rx="95" ry="12" fill="rgba(28,46,28,0.12)"/>
+  <!-- Body -->
+  <path d="M110 155 Q108 330 115 334 Q200 348 285 334 Q292 330 290 155 Z" fill="#3A6B4A"/>
+  <!-- Body sheen left -->
+  <path d="M110 155 Q108 280 115 310 Q135 320 145 315 Q140 285 138 155 Z" fill="rgba(255,255,255,0.07)"/>
+  <!-- Body sheen right -->
+  <path d="M260 155 Q262 285 258 315 Q270 320 285 310 Q292 280 290 155 Z" fill="rgba(0,0,0,0.06)"/>
+  <!-- Horizontal band -->
+  <path d="M110 240 Q200 248 290 240 L290 255 Q200 263 110 255 Z" fill="rgba(255,255,255,0.08)"/>
+  <!-- Handles left -->
+  <path d="M108 190 Q80 190 78 210 Q78 228 108 228" fill="none" stroke="#2d5438" stroke-width="14" stroke-linecap="round"/>
+  <!-- Handles right -->
+  <path d="M292 190 Q320 190 322 210 Q322 228 292 228" fill="none" stroke="#2d5438" stroke-width="14" stroke-linecap="round"/>
+  <!-- Lid rim -->
+  <ellipse cx="200" cy="155" rx="92" ry="18" fill="#2d5438"/>
+  <!-- Lid body -->
+  <path d="M112 155 Q200 118 288 155" fill="#3A6B4A" stroke="none"/>
+  <path d="M112 155 Q200 115 288 155" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <!-- Lid knob stem -->
+  <rect x="194" y="108" width="12" height="18" rx="6" fill="#2d5438"/>
+  <!-- Lid knob -->
+  <ellipse cx="200" cy="106" rx="16" ry="9" fill="#2A5240"/>
+  <ellipse cx="200" cy="104" rx="12" ry="6" fill="rgba(255,255,255,0.08)"/>
+</svg>

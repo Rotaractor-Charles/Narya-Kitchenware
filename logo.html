@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Narya Kitchenware — Logo System</title>
+  <style>
+    :root {
+      --narya-green:  #1C2E1C;
+      --narya-cream:  #F5F7F0;
+      --narya-font:   Georgia, 'Times New Roman', serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #f5f5f0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #1a1a1a;
+    }
+
+    header {
+      padding: 48px 40px 24px;
+      border-bottom: 1px solid #e0e0d8;
+    }
+    header h1 { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #666; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1px;
+      background: #e0e0d8;
+      border-top: 1px solid #e0e0d8;
+    }
+
+    .card {
+      background: #f5f5f0;
+      padding: 48px 40px;
+    }
+
+    .card-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 32px;
+    }
+
+    /* ── Logo SVG shared styles ─────────────────────────── */
+    .logo-svg { display: block; }
+
+    /* ── Swatch row ─────────────────────────────────────── */
+    .swatches { display: flex; gap: 16px; margin-top: 8px; }
+    .swatch {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .swatch-block {
+      width: 80px;
+      height: 80px;
+      border-radius: 6px;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+    .swatch-name  { font-size: 12px; font-weight: 600; color: #1a1a1a; }
+    .swatch-hex   { font-size: 11px; color: #888; font-family: ui-monospace, monospace; }
+
+    /* ── Clearspace note ────────────────────────────────── */
+    .note {
+      font-size: 12px;
+      color: #888;
+      line-height: 1.6;
+      margin-top: 24px;
+    }
+    .note strong { color: #444; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Narya Kitchenware — Logo System</h1>
+  </header>
+
+  <div class="grid">
+
+    <!-- ① Primary: dark background -->
+    <div class="card" style="background: var(--narya-green);">
+      <div class="card-label" style="color: rgba(233,239,219,0.5);">Primary — Dark</div>
+      <svg class="logo-svg" viewBox="0 0 300 200" width="300" height="200" xmlns="http://www.w3.org/2000/svg" aria-label="Narya Kitchenware">
+        <!-- Icon: two herb sprigs -->
+        <g transform="translate(150 88)" stroke="#F5F7F0" stroke-width="4" stroke-linecap="round" fill="none">
+          <!-- Sprig right: stalk with three tips (rosemary/dill) -->
+          <g transform="rotate(20)">
+            <line x1="0"   y1="0"   x2="0"   y2="-58"/>
+            <line x1="-5"  y1="-58" x2="-5"  y2="-72"/>
+            <line x1="0"   y1="-58" x2="0"   y2="-75"/>
+            <line x1="5"   y1="-58" x2="5"   y2="-72"/>
+          </g>
+          <!-- Sprig left: stalk with oval leaf (basil/sage) -->
+          <g transform="rotate(-20)">
+            <line x1="0" y1="0" x2="0" y2="-56"/>
+            <ellipse cx="0" cy="-65" rx="8.5" ry="11.5"/>
+          </g>
+        </g>
+        <!-- Wordmark -->
+        <text
+          x="150" y="145"
+          text-anchor="middle"
+          fill="#F5F7F0"
+          font-family="Georgia, 'Times New Roman', serif"
+          font-size="36"
+          letter-spacing="6"
+        >NARYA</text>
+      </svg>
+    </div>
+
+    <!-- ② Reversed: light background -->
+    <div class="card" style="background: var(--narya-cream);">
+      <div class="card-label" style="color: rgba(20,48,31,0.4);">Reversed — Light</div>
+      <svg class="logo-svg" viewBox="0 0 300 200" width="300" height="200" xmlns="http://www.w3.org/2000/svg" aria-label="Narya Kitchenware">
+        <g transform="translate(150 88)" stroke="#1C2E1C" stroke-width="4" stroke-linecap="round" fill="none">
+          <g transform="rotate(20)">
+            <line x1="0"   y1="0"   x2="0"   y2="-58"/>
+            <line x1="-5"  y1="-58" x2="-5"  y2="-72"/>
+            <line x1="0"   y1="-58" x2="0"   y2="-75"/>
+            <line x1="5"   y1="-58" x2="5"   y2="-72"/>
+          </g>
+          <g transform="rotate(-20)">
+            <line x1="0" y1="0" x2="0" y2="-56"/>
+            <ellipse cx="0" cy="-65" rx="8.5" ry="11.5"/>
+          </g>
+        </g>
+        <text
+          x="150" y="145"
+          text-anchor="middle"
+          fill="#1C2E1C"
+          font-family="Georgia, 'Times New Roman', serif"
+          font-size="36"
+          letter-spacing="6"
+        >NARYA</text>
+      </svg>
+    </div>
+
+    <!-- ③ Icon only: dark background -->
+    <div class="card" style="background: var(--narya-green);">
+      <div class="card-label" style="color: rgba(233,239,219,0.5);">Icon Only</div>
+      <svg class="logo-svg" viewBox="0 0 120 120" width="120" height="120" xmlns="http://www.w3.org/2000/svg" aria-label="Narya Kitchenware icon">
+        <g transform="translate(60 70)" stroke="#F5F7F0" stroke-width="4.5" stroke-linecap="round" fill="none">
+          <g transform="rotate(20)">
+            <line x1="0"   y1="0"   x2="0"   y2="-58"/>
+            <line x1="-5"  y1="-58" x2="-5"  y2="-72"/>
+            <line x1="0"   y1="-58" x2="0"   y2="-75"/>
+            <line x1="5"   y1="-58" x2="5"   y2="-72"/>
+          </g>
+          <g transform="rotate(-20)">
+            <line x1="0" y1="0" x2="0" y2="-56"/>
+            <ellipse cx="0" cy="-65" rx="8.5" ry="11.5"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <!-- ④ Wordmark only: light background -->
+    <div class="card" style="background: var(--narya-cream);">
+      <div class="card-label" style="color: rgba(20,48,31,0.4);">Wordmark Only</div>
+      <svg class="logo-svg" viewBox="0 0 260 60" width="260" height="60" xmlns="http://www.w3.org/2000/svg" aria-label="Narya">
+        <text
+          x="130" y="44"
+          text-anchor="middle"
+          fill="#1C2E1C"
+          font-family="Georgia, 'Times New Roman', serif"
+          font-size="40"
+          letter-spacing="8"
+        >NARYA</text>
+      </svg>
+    </div>
+
+    <!-- ⑤ Brand colours -->
+    <div class="card">
+      <div class="card-label">Brand Colours</div>
+      <div class="swatches">
+        <div class="swatch">
+          <div class="swatch-block" style="background: #1C2E1C;"></div>
+          <div class="swatch-name">Forest</div>
+          <div class="swatch-hex">#1C2E1C</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-block" style="background: #F5F7F0; border-color: #ccc;"></div>
+          <div class="swatch-name">Cream</div>
+          <div class="swatch-hex">#F5F7F0</div>
+        </div>
+      </div>
+      <p class="note">
+        <strong>Typography:</strong> Georgia (serif) for the wordmark.<br>
+        Use system sans-serif for body copy.
+      </p>
+    </div>
+
+    <!-- ⑥ Usage notes -->
+    <div class="card">
+      <div class="card-label">Usage Notes</div>
+      <p class="note">
+        <strong>Do</strong> use the primary (dark) version on Forest or white backgrounds.
+        Use the reversed (light) version on Cream or very light backgrounds.<br><br>
+        <strong>Don't</strong> recolour the icon, stretch the lockup, or place the logo on busy photographic backgrounds without a solid colour overlay.<br><br>
+        <strong>Minimum size:</strong> 120px wide for the full lockup; 32px for the icon alone.<br><br>
+        <strong>Clear space:</strong> Maintain clear space equal to the cap-height of the "N" on all sides of the lockup.
+      </p>
+    </div>
+
+  </div>
+
+</body>
+</html>

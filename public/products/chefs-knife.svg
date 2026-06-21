@@ -1,0 +1,26 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#E8EDE0"/>
+  <!-- Shadow -->
+  <ellipse cx="200" cy="348" rx="130" ry="10" fill="rgba(28,46,28,0.10)"/>
+  <!-- Blade -->
+  <path d="M68 310 L68 205 Q68 155 295 90 L308 90 L308 105 Q100 165 88 310 Z" fill="#C8CDD0"/>
+  <!-- Blade spine highlight -->
+  <path d="M68 208 Q68 160 295 92 L308 90 L308 94 Q296 95 68 213 Z" fill="rgba(255,255,255,0.6)"/>
+  <!-- Blade bevel -->
+  <path d="M72 295 L80 205 Q82 168 295 103 L302 103 Q88 163 84 295 Z" fill="rgba(255,255,255,0.18)"/>
+  <!-- Bolster -->
+  <rect x="300" y="88" width="22" height="100" rx="4" fill="#8A8F94"/>
+  <rect x="300" y="88" width="8" height="100" rx="3" fill="rgba(255,255,255,0.2)"/>
+  <!-- Handle -->
+  <path d="M322 90 Q322 85 335 84 L368 84 Q382 84 382 96 L382 178 Q382 190 368 190 L335 190 Q322 190 322 186 Z" fill="#1C2E1C"/>
+  <!-- Handle rivets -->
+  <circle cx="342" cy="121" r="6" fill="#3a3a3a"/>
+  <circle cx="342" cy="121" r="3" fill="#555"/>
+  <circle cx="342" cy="151" r="6" fill="#3a3a3a"/>
+  <circle cx="342" cy="151" r="3" fill="#555"/>
+  <!-- Handle grain -->
+  <path d="M326 98 L326 182" stroke="rgba(255,255,255,0.04)" stroke-width="2"/>
+  <path d="M332 94 L332 185" stroke="rgba(255,255,255,0.03)" stroke-width="1.5"/>
+  <!-- Blade edge line -->
+  <path d="M72 305 L80 210 Q82 165 295 100" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+</svg>
