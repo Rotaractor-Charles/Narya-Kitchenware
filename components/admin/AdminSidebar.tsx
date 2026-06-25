@@ -11,40 +11,38 @@ const NAV = [
     items: [{ label: 'Dashboard', href: '/admin', icon: '⊞' }],
   },
   {
-    section: 'Products',
+    section: 'Catalogue',
     items: [
-      { label: 'All Products',    href: '/admin/products'     },
-      { label: 'Add new product', href: '/admin/products/new' },
-      { label: 'Brands',          href: '/admin/brands'       },
-      { label: 'Categories',      href: '/admin/categories'   },
-      { label: 'Tags',            href: '/admin/tags'         },
-      { label: 'Attributes',      href: '/admin/attributes'   },
-      { label: 'Reviews',         href: '/admin/reviews'      },
+      { label: 'Products',    href: '/admin/products'     },
+      { label: 'Add Product', href: '/admin/products/new' },
+      { label: 'Categories',  href: '/admin/categories'   },
+      { label: 'Brands',      href: '/admin/brands'       },
+      { label: 'Attributes',  href: '/admin/attributes'   },
+      { label: 'Tags',        href: '/admin/tags'         },
+      { label: 'Reviews',     href: '/admin/reviews'      },
     ],
   },
   {
-    section: 'Orders',
+    section: 'Sales',
     items: [
-      { label: 'All Orders', href: '/admin/orders'     },
-      { label: 'Add new',    href: '/admin/orders/new' },
+      { label: 'Orders',    href: '/admin/orders'    },
+      { label: 'Customers', href: '/admin/customers' },
     ],
   },
   {
-    section: 'Customers',
+    section: 'Promotions',
     items: [
-      { label: 'All Customers', href: '/admin/customers' },
+      { label: 'Discounts',  href: '/admin/discounts'  },
+      { label: 'Coupons',    href: '/admin/coupons'    },
+      { label: 'Affiliates', href: '/admin/affiliates' },
+      { label: 'Rewards',    href: '/admin/rewards'    },
     ],
   },
   {
-    section: 'Rewards',
+    section: 'Configuration',
     items: [
-      { label: 'Points & Tiers', href: '/admin/rewards' },
-    ],
-  },
-  {
-    section: 'Settings',
-    items: [
-      { label: 'General', href: '/admin/settings' },
+      { label: 'Shipping', href: '/admin/shipping' },
+      { label: 'Settings', href: '/admin/settings' },
     ],
   },
 ]

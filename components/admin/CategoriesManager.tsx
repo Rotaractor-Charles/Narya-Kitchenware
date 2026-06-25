@@ -71,7 +71,7 @@ export default function CategoriesManager({ initialCategories }: { initialCatego
     setName(cat.name); setSlug(cat.slug)
     setParentId(cat.parentId ?? '')
     setDescription(cat.description ?? '')
-    setDisplayType(cat.displayType ?? 'products')
+    setDisplayType((cat.displayType ?? 'products') as 'products' | 'subcategories' | 'both')
     setThumbnail(cat.thumbnail ?? '')
     setError(''); setNotice('')
     window.scrollTo({ top: 0, behavior: 'smooth' })

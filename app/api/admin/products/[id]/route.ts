@@ -1,35 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/session'
-import { updateProduct, deleteProduct } from '@/lib/products'
+import { cookies } from 'next/headers'
 
-async function assertAdmin() {
-  const session = await getSession()
-  return !!session
-}
+const API_URL = process.env.API_URL ?? 'http://localhost:8000'
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!await assertAdmin()) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
-  }
-  try {
-    const { id } = await params
-    const body   = await request.json()
-    await updateProduct(id, body)
-    return NextResponse.json({ success: true })
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+type Params = { params: Promise<{ id: string }> }
+
+async function adminHeaders(): Promise<Record<string, string> | null> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('narya_token')?.value
+  if (!token) return null
+  return {
+    Authorization:  `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    Accept:         'application/json',
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!await assertAdmin()) {
-    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
-  }
-  try {
-    const { id } = await params
-    await deleteProduct(id)
-    return NextResponse.json({ success: true })
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
-  }
+export async function GET(_req: NextRequest, { params }: Params) {
+  const headers = await adminHeaders()
+  if (!headers) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+
+  const { id } = await params
+  const res    = await fetch(`${API_URL}/api/v1/admin/products/${id}`, { headers })
+  const data   = await res.json()
+  return NextResponse.json(data, { status: res.status })
+}
+
+export async function PATCH(request: NextRequest, { params }: Params) {
+  const headers = await adminHeaders()
+  if (!headers) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+
+  const { id } = await params
+  const body   = await request.json()
+  const res    = await fetch(`${API_URL}/api/v1/admin/products/${id}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(body),
+  })
+  const data = await res.json()
+  return NextResponse.json(data, { status: res.status })
+}
+
+export async function DELETE(_req: NextRequest, { params }: Params) {
+  const headers = await adminHeaders()
+  if (!headers) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+
+  const { id } = await params
+  const res    = await fetch(`${API_URL}/api/v1/admin/products/${id}`, {
+    method: 'DELETE',
+    headers,
+  })
+  const data = await res.json()
+  return NextResponse.json(data, { status: res.status })
 }

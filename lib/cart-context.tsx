@@ -1,6 +1,15 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type ReactNode,
+} from 'react'
+import { useAuth } from '@/lib/auth-context'
 
 export type CartItem = {
   id: string
@@ -10,6 +19,10 @@ export type CartItem = {
   price: number
   originalPrice?: number
   qty: number
+  cartItemId?: number
+  productId?: number
+  variantId?: number
+  variantName?: string
 }
 
 type CartCtx = {
@@ -17,70 +30,264 @@ type CartCtx = {
   isOpen: boolean
   openCart: () => void
   closeCart: () => void
-  addItem: (item: Omit<CartItem, 'qty'> & { qty?: number }) => void
+  addItem: (item: Omit<CartItem, 'qty' | 'cartItemId'> & { qty?: number }) => void
   removeItem: (id: string) => void
   updateQty: (id: string, delta: number) => void
+  clearCart: () => void
+  waitForCartSync: () => Promise<void>
   itemCount: number
   subtotal: number
 }
 
 const Ctx = createContext<CartCtx | null>(null)
 
+type ServerItem = {
+  id: number
+  quantity: number
+  product_id: number | null
+  product_variant_id: number | null
+  product: {
+    id: number
+    name: string
+    slug: string
+    price: number
+    compare_at_price: number | null
+    image_url: string | null
+  } | null
+  variant: {
+    id: number
+    name: string
+    price: number | null
+    image: string | null
+  } | null
+}
+
+function normalise(raw: ServerItem[]): CartItem[] {
+  return raw
+    .filter(i => i.product !== null)
+    .map(i => {
+      const price  = i.variant?.price ?? i.product!.price
+      const itemId = i.variant
+        ? `${i.product!.slug}-v${i.variant.id}`
+        : i.product!.slug
+
+      return {
+        id:            itemId,
+        slug:          i.product!.slug,
+        name:          i.product!.name,
+        image:         i.variant?.image ?? i.product!.image_url ?? '/products/placeholder.svg',
+        price:         price / 100,
+        originalPrice: i.product!.compare_at_price
+          ? i.product!.compare_at_price / 100
+          : undefined,
+        qty:           i.quantity,
+        cartItemId:    i.id,
+        productId:     i.product!.id,
+        variantId:     i.variant?.id,
+        variantName:   i.variant?.name,
+      }
+    })
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([
-    {
-      id: 'cast-iron-skillet',
-      slug: 'cast-iron-skillet',
-      name: 'Cast Iron Skillet 10"',
-      image: '/products/cast-iron-skillet.svg',
-      price: 3200,
-      qty: 1,
-    },
-    {
-      id: 'mixing-bowls',
-      slug: 'mixing-bowls',
-      name: 'Ceramic Mixing Bowl Set',
-      image: '/products/mixing-bowls.svg',
-      price: 2800,
-      originalPrice: 3500,
-      qty: 2,
-    },
-  ])
+  const [items,  setItems]  = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
+  const { user }            = useAuth()
+
+  const prevUserId = useRef<number | null | undefined>(undefined)
+
+  const itemsRef = useRef<CartItem[]>([])
+  useEffect(() => { itemsRef.current = items }, [items])
+
+  const addSyncQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const addMutationSeqRef = useRef(0)
+  const latestAddMutationByItemRef = useRef(new Map<string, number>())
+
+  const fetchCart = useCallback(async (): Promise<CartItem[] | null> => {
+    try {
+      const res = await fetch('/api/cart')
+      if (!res.ok) return null
+      const data = await res.json()
+      return normalise((data?.data?.items ?? []) as ServerItem[])
+    } catch {
+      return null
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchCart().then(serverItems => {
+      if (serverItems === null) return
+      setItems(prev => {
+        if (prev.length === 0) return serverItems
+        return prev
+      })
+    })
+  }, [fetchCart])
+
+  useEffect(() => {
+    if (prevUserId.current === undefined) {
+      prevUserId.current = user?.id ?? null
+      return
+    }
+    if ((user?.id ?? null) === prevUserId.current) return
+
+    const wasGuest  = prevUserId.current === null
+    const nowAuthed = user !== null
+    prevUserId.current = user?.id ?? null
+
+    if (wasGuest && nowAuthed) {
+      const syncGuestCart = async () => {
+        const guestItems = itemsRef.current.filter(i => i.productId)
+        await Promise.all(
+          guestItems.map(item =>
+            fetch('/api/cart', {
+              method:  'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                product_id:         item.productId,
+                product_variant_id: item.variantId ?? null,
+                quantity:           item.qty,
+              }),
+            }).catch(() => {})
+          )
+        )
+        const merged = await fetchCart()
+        if (merged !== null) setItems(merged)
+      }
+      addSyncQueueRef.current = addSyncQueueRef.current.then(syncGuestCart, syncGuestCart)
+    } else {
+      fetchCart().then(fresh => { if (fresh !== null) setItems(fresh) })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   const openCart  = useCallback(() => setIsOpen(true),  [])
   const closeCart = useCallback(() => setIsOpen(false), [])
+  const waitForCartSync = useCallback(
+    () => addSyncQueueRef.current.catch(() => {}),
+    []
+  )
 
-  const addItem = useCallback((incoming: Omit<CartItem, 'qty'> & { qty?: number }) => {
+  const addItem = useCallback((
+    incoming: Omit<CartItem, 'qty' | 'cartItemId'> & { qty?: number }
+  ) => {
+    const qty    = incoming.qty ?? 1
+    const itemId = incoming.variantId
+      ? `${incoming.slug}-v${incoming.variantId}`
+      : (incoming.id || incoming.slug)
+
     setItems(prev => {
-      const existing = prev.find(i => i.id === incoming.id)
+      const existing = prev.find(i => i.id === itemId)
       if (existing) {
-        return prev.map(i =>
-          i.id === incoming.id ? { ...i, qty: i.qty + (incoming.qty ?? 1) } : i
-        )
+        return prev.map(i => i.id === itemId ? { ...i, qty: i.qty + qty } : i)
       }
-      return [...prev, { ...incoming, qty: incoming.qty ?? 1 }]
+      return [...prev, { ...incoming, id: itemId, qty }]
     })
     setIsOpen(true)
+
+    if (!incoming.productId) return
+
+    const mutationId = ++addMutationSeqRef.current
+    latestAddMutationByItemRef.current.set(itemId, mutationId)
+    const isLatestMutation = () =>
+      latestAddMutationByItemRef.current.get(itemId) === mutationId
+
+    const syncAdd = async () => {
+      try {
+        const r = await fetch('/api/cart', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            product_id:         incoming.productId,
+            product_variant_id: incoming.variantId ?? null,
+            quantity:           qty,
+          }),
+        })
+
+        if (!r.ok) {
+          if (isLatestMutation()) {
+            setItems(prev => prev.filter(i => i.id !== itemId))
+          }
+          return
+        }
+
+        const data = await r.json()
+        if (data?.data?.items) {
+          const serverItems = normalise(data.data.items as ServerItem[])
+          const serverItem  = serverItems.find(i => i.id === itemId)
+          if (!isLatestMutation()) return
+
+          setItems(prev => {
+            if (serverItem) {
+              return prev.map(i => {
+                if (i.id !== itemId) return i
+                return {
+                  ...serverItem,
+                  qty: Math.max(i.qty, serverItem.qty),
+                }
+              })
+            }
+            return prev.filter(i => i.id !== itemId)
+          })
+        }
+      } catch {
+        // Keep optimistic state on network failure; next load reconciles.
+      }
+    }
+
+    addSyncQueueRef.current = addSyncQueueRef.current.then(syncAdd, syncAdd)
   }, [])
 
   const removeItem = useCallback((id: string) => {
-    setItems(prev => prev.filter(i => i.id !== id))
-  }, [])
+    setItems(prev => {
+      const item = prev.find(i => i.id === id)
+      if (item?.cartItemId) {
+        fetch(`/api/cart/items/${item.cartItemId}`, { method: 'DELETE' })
+          .then(r => { if (!r.ok) fetchCart().then(real => { if (real !== null) setItems(real) }) })
+          .catch(() => {})
+      }
+      return prev.filter(i => i.id !== id)
+    })
+  }, [fetchCart])
 
   const updateQty = useCallback((id: string, delta: number) => {
-    setItems(prev =>
-      prev
+    setItems(prev => {
+      const updated = prev
         .map(i => i.id === id ? { ...i, qty: i.qty + delta } : i)
         .filter(i => i.qty > 0)
-    )
-  }, [])
+
+      const item        = prev.find(i => i.id === id)
+      const updatedItem = updated.find(i => i.id === id)
+
+      if (item?.cartItemId) {
+        const req = updatedItem
+          ? fetch(`/api/cart/items/${item.cartItemId}`, {
+              method:  'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body:    JSON.stringify({ quantity: updatedItem.qty }),
+            })
+          : fetch(`/api/cart/items/${item.cartItemId}`, { method: 'DELETE' })
+
+        req
+          .then(r => { if (!r.ok) fetchCart().then(real => { if (real !== null) setItems(real) }) })
+          .catch(() => {})
+      }
+
+      return updated
+    })
+  }, [fetchCart])
+
+  const clearCart = useCallback(() => setItems([]), [])
 
   const itemCount = items.reduce((s, i) => s + i.qty, 0)
   const subtotal  = items.reduce((s, i) => s + i.price * i.qty, 0)
 
   return (
-    <Ctx.Provider value={{ items, isOpen, openCart, closeCart, addItem, removeItem, updateQty, itemCount, subtotal }}>
+    <Ctx.Provider value={{
+      items, isOpen, openCart, closeCart,
+      addItem, removeItem, updateQty, clearCart, waitForCartSync,
+      itemCount, subtotal,
+    }}>
       {children}
     </Ctx.Provider>
   )

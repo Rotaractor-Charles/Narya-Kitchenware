@@ -202,7 +202,7 @@ export default function CartClient() {
             {/* Earn points */}
             <div className="mt-4 bg-earth rounded-xl px-4 py-3">
               <p className="text-[10px] text-sienna/80 uppercase tracking-widest mb-0.5">You'll earn</p>
-              <p className="text-ivory font-semibold text-base">+{Math.floor(total / 10)} Narya Points</p>
+              <p className="text-ivory font-semibold text-base">+{Math.floor(subtotal / 10)} Narya Points</p>
             </div>
 
             <Link

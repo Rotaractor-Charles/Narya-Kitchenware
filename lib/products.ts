@@ -1,104 +1,150 @@
 import 'server-only'
-import { adminDb } from '@/lib/firebase-admin'
-import { FieldValue } from 'firebase-admin/firestore'
-export { CATEGORIES } from '@/lib/categories'
+import { cookies } from 'next/headers'
 
+// Admin-facing product shape used by ProductsTable and ProductForm
 export type Product = {
-  id:             string
-  slug:           string
-  name:           string
-  category:       string
-  categorySlug:   string
-  price:          number
-  originalPrice?: number
-  images:         string[]
-  stock:          number
-  rating:         number
-  reviews:        number
-  description:    string
-  specs:          Record<string, string>
-  care:           string
-  isNew?:         boolean
-  isActive?:      boolean
-  createdAt?:     FirebaseFirestore.Timestamp
-  updatedAt?:     FirebaseFirestore.Timestamp
+  id: string
+  slug: string
+  name: string
+  description: string
+  category: string
+  categorySlug: string
+  categoryId: number | null
+  price: number          // KES (not cents)
+  originalPrice?: number // KES (not cents)
+  sku: string
+  images: string[]       // array of URLs
+  stock: number
+  isActive: boolean
+  isFeatured: boolean
+  isNew?: boolean
+  care?: string
+  createdAt?: string
 }
 
-export type ProductInput = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>
+export type ProductInput = {
+  name: string
+  slug?: string
+  description?: string
+  price: number          // KES
+  originalPrice?: number // KES
+  sku: string
+  stock_quantity: number
+  category_id?: number | null
+  is_active?: boolean
+  is_featured?: boolean
+}
 
-const col = () => adminDb.collection('products')
+const API_URL = process.env.API_URL ?? 'http://localhost:8000'
+
+async function adminToken(): Promise<string | null> {
+  const cookieStore = await cookies()
+  return cookieStore.get('narya_token')?.value ?? null
+}
+
+function adminHeaders(token: string): Record<string, string> {
+  return {
+    Authorization:  `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    Accept:         'application/json',
+  }
+}
+
+// Map Laravel product shape → admin Product type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapProduct(p: any): Product {
+  return {
+    id:           String(p.id),
+    slug:         p.slug,
+    name:         p.name,
+    description:  p.description ?? '',
+    category:     p.category?.name ?? '',
+    categorySlug: p.category?.slug ?? '',
+    categoryId:   p.category?.id ?? null,
+    price:        Math.round((p.price ?? 0) / 100),
+    originalPrice: p.compare_at_price ? Math.round(p.compare_at_price / 100) : undefined,
+    sku:          p.sku ?? '',
+    images:       (p.images ?? []).map((i: { url: string }) => i.url),
+    stock:        p.stock_quantity ?? 0,
+    isActive:     p.is_active ?? true,
+    isFeatured:   p.is_featured ?? false,
+    createdAt:    p.created_at,
+  }
+}
 
 export async function getProducts(): Promise<Product[]> {
-  const snap = await col().orderBy('name').get()
-  return snap.docs
-    .map(d => ({ id: d.id, ...d.data() } as Product))
-    .filter(p => p.isActive !== false)
+  const token = await adminToken()
+  if (!token) return []
+
+  const res = await fetch(`${API_URL}/api/v1/admin/products?per_page=100`, {
+    headers: adminHeaders(token),
+    cache: 'no-store',
+  })
+  if (!res.ok) return []
+
+  const data = await res.json()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data.data ?? []).map((p: any) => mapProduct(p))
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const snap = await col().where('slug', '==', slug).limit(1).get()
-  if (snap.empty) return null
-  const doc = snap.docs[0]
-  return { id: doc.id, ...doc.data() } as Product
+export async function getProductById(id: string): Promise<Product | null> {
+  const token = await adminToken()
+  if (!token) return null
+
+  const res = await fetch(`${API_URL}/api/v1/admin/products/${id}`, {
+    headers: adminHeaders(token),
+    cache: 'no-store',
+  })
+  if (!res.ok) return null
+
+  const data = await res.json()
+  return mapProduct(data.data)
 }
 
-export async function getProductsByCategory(categorySlug: string): Promise<Product[]> {
-  const snap = await col()
-    .where('categorySlug', '==', categorySlug)
-    .orderBy('name')
-    .get()
-  return snap.docs
-    .map(d => ({ id: d.id, ...d.data() } as Product))
-    .filter(p => p.isActive !== false)
+export async function createProduct(input: ProductInput): Promise<Product> {
+  const token = await adminToken()
+  if (!token) throw new Error('Unauthenticated')
+
+  const res = await fetch(`${API_URL}/api/v1/admin/products`, {
+    method: 'POST',
+    headers: adminHeaders(token),
+    body: JSON.stringify({
+      ...input,
+      price:            Math.round((input.price ?? 0) * 100),
+      compare_at_price: input.originalPrice ? Math.round(input.originalPrice * 100) : null,
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.json()
+    throw new Error(err.message ?? 'Create failed')
+  }
+  const data = await res.json()
+  return mapProduct(data.data)
 }
 
-export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
-  const snap = await col()
-    .where('categorySlug', '==', product.categorySlug)
-    .orderBy('name')
-    .limit(limit + 1)
-    .get()
-  return snap.docs
-    .map(d => ({ id: d.id, ...d.data() } as Product))
-    .filter(p => p.id !== product.id && p.isActive !== false)
-    .slice(0, limit)
-}
+export async function updateProduct(id: string, input: Partial<ProductInput>): Promise<void> {
+  const token = await adminToken()
+  if (!token) throw new Error('Unauthenticated')
 
-export async function getNewArrivals(limit = 8): Promise<Product[]> {
-  const snap = await col().where('isNew', '==', true).orderBy('name').limit(limit + 5).get()
-  return snap.docs
-    .map(d => ({ id: d.id, ...d.data() } as Product))
-    .filter(p => p.isActive !== false)
-    .slice(0, limit)
-}
+  const body: Record<string, unknown> = { ...input }
+  if (typeof input.price === 'number')         body.price            = Math.round(input.price * 100)
+  if (typeof input.originalPrice === 'number') body.compare_at_price = Math.round(input.originalPrice * 100)
+  delete body.originalPrice
 
-export async function getSaleProducts(limit = 8): Promise<Product[]> {
-  const snap = await col().orderBy('name').get()
-  return snap.docs
-    .map(d => ({ id: d.id, ...d.data() } as Product))
-    .filter(p => p.isActive !== false && p.originalPrice && p.originalPrice > p.price)
-    .slice(0, limit)
-}
-
-// ─── Admin writes ────────────────────────────────────────────────────────────
-
-export async function createProduct(data: ProductInput): Promise<Product> {
-  const ref = col().doc()
-  const now = FieldValue.serverTimestamp()
-  await ref.set({ ...data, isActive: data.isActive ?? true, createdAt: now, updatedAt: now })
-  const snap = await ref.get()
-  return { id: ref.id, ...snap.data() } as Product
-}
-
-export async function updateProduct(id: string, data: Partial<ProductInput>): Promise<void> {
-  await col().doc(id).update({ ...data, updatedAt: FieldValue.serverTimestamp() })
+  await fetch(`${API_URL}/api/v1/admin/products/${id}`, {
+    method: 'PATCH',
+    headers: adminHeaders(token),
+    body: JSON.stringify(body),
+  })
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-  await col().doc(id).update({ isActive: false, updatedAt: FieldValue.serverTimestamp() })
-}
+  const token = await adminToken()
+  if (!token) throw new Error('Unauthenticated')
 
-export async function hardDeleteProduct(id: string): Promise<void> {
-  await col().doc(id).delete()
+  await fetch(`${API_URL}/api/v1/admin/products/${id}`, {
+    method: 'DELETE',
+    headers: adminHeaders(token),
+  })
 }
-

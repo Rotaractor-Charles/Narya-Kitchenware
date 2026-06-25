@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { signInWithEmailAndPassword } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { useAuth } from '@/lib/auth-context'
 
 export default function AdminLoginForm() {
-  const router = useRouter()
+  const router  = useRouter()
+  const { login } = useAuth()
 
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
@@ -19,31 +20,18 @@ export default function AdminLoginForm() {
     setLoading(true)
 
     try {
-      const credential = await signInWithEmailAndPassword(auth, email, password)
-      const idToken    = await credential.user.getIdToken()
+      const user = await login(email, password)
 
-      const res = await fetch('/api/auth/login', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ idToken }),
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error ?? 'Login failed')
+      if (user.role !== 'admin' && user.role !== 'shop_manager') {
+        setError('You do not have admin access.')
+        return
       }
 
       router.push('/admin')
       router.refresh()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Login failed'
-      if (msg.includes('user-not-found') || msg.includes('wrong-password') || msg.includes('invalid-credential')) {
-        setError('Incorrect email or password.')
-      } else if (msg.includes('too-many-requests')) {
-        setError('Too many attempts. Try again later.')
-      } else {
-        setError(msg)
-      }
+      setError(msg.includes('401') || msg.includes('credentials') ? 'Incorrect email or password.' : msg)
     } finally {
       setLoading(false)
     }
@@ -52,7 +40,6 @@ export default function AdminLoginForm() {
   return (
     <div className="min-h-screen bg-earth flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        {/* Logo mark */}
         <div className="text-center mb-10">
           <p className="text-ivory/30 text-[10px] uppercase tracking-[0.25em] mb-3">Narya Kitchenware</p>
           <h1 className="text-ivory font-serif text-2xl">Admin Portal</h1>
@@ -107,9 +94,9 @@ export default function AdminLoginForm() {
 
         <p className="text-center text-ivory/20 text-[11px] mt-6">
           Not an admin?{' '}
-          <a href="/" className="text-ivory/40 hover:text-ivory/60 transition-colors underline underline-offset-2">
+          <Link href="/" className="text-ivory/40 hover:text-ivory/60 transition-colors underline underline-offset-2">
             Return to store
-          </a>
+          </Link>
         </p>
       </div>
     </div>

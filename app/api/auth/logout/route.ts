@@ -1,14 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { destroySession } from '@/lib/session'
+import { NextResponse } from 'next/server'
+import { serverLogout } from '@/lib/api/auth'
+import { clearTokenCookie } from '@/lib/api/cookie'
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
-    await destroySession()
-    const referer = request.headers.get('referer') ?? ''
-    const dest    = referer.includes('/admin') ? '/admin/login' : '/'
-    return NextResponse.redirect(new URL(dest, request.url))
-  } catch (err) {
-    console.error('[/api/auth/logout]', err)
-    return NextResponse.json({ error: 'Logout failed' }, { status: 500 })
+    await serverLogout()
+  } catch {
+    // If Laravel returns 401 the token is already dead — still clear the cookie
   }
+
+  const response = NextResponse.json({ message: 'Logged out successfully.' })
+  clearTokenCookie(response)
+  return response
 }

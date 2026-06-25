@@ -2,11 +2,19 @@
 
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import { type ProductCard } from './ProductRow'
+type FlashProduct = {
+  id: string
+  slug: string
+  name: string
+  price: number
+  originalPrice?: number
+  image: string
+  stock?: number
+}
 
 type Props = {
-  endsAt: string   // ISO timestamp from server
-  products: ProductCard[]
+  endsAt: string
+  products: FlashProduct[]
 }
 
 function pad(n: number) {

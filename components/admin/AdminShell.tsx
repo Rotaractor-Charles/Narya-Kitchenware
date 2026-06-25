@@ -1,13 +1,36 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 import AdminSidebar from './AdminSidebar'
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router   = useRouter()
+  const { user, loading } = useAuth()
 
-  // Login page gets no sidebar — it's a standalone full-screen page
-  if (pathname === '/admin/login') return <>{children}</>
+  const isLoginPage = pathname === '/admin/login'
+
+  useEffect(() => {
+    if (isLoginPage || loading) return
+    if (!user) { router.replace('/admin/login'); return }
+    if (user.role !== 'admin' && user.role !== 'shop_manager') {
+      router.replace('/')
+    }
+  }, [user, loading, isLoginPage, router])
+
+  if (isLoginPage) return <>{children}</>
+
+  if (loading || !user) {
+    return (
+      <div className="flex min-h-screen bg-[#0f1a0f] items-center justify-center">
+        <span className="text-ivory/30 text-sm">Loading…</span>
+      </div>
+    )
+  }
+
+  if (user.role !== 'admin' && user.role !== 'shop_manager') return null
 
   return (
     <div className="flex min-h-screen bg-[#0f1a0f] text-sm">

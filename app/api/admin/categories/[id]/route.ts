@@ -1,28 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/session'
-import { updateAdminCategory, deleteAdminCategory } from '@/lib/categories-admin'
+import { cookies } from 'next/headers'
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+const API_URL = process.env.API_URL ?? 'http://localhost:8000'
 
-  const { id } = await params
-  const data = await request.json()
-  await updateAdminCategory(id, data)
-  return NextResponse.json({ success: true })
+type Params = { params: Promise<{ id: string }> }
+
+async function adminHeaders(): Promise<Record<string, string> | null> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('narya_token')?.value
+  if (!token) return null
+  return {
+    Authorization:  `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    Accept:         'application/json',
+  }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export async function PATCH(request: NextRequest, { params }: Params) {
+  const headers = await adminHeaders()
+  if (!headers) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
   const { id } = await params
-  await deleteAdminCategory(id)
-  return NextResponse.json({ success: true })
+  const body   = await request.json()
+  const res    = await fetch(`${API_URL}/api/v1/admin/categories/${id}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(body),
+  })
+  const data = await res.json()
+  return NextResponse.json(data, { status: res.status })
+}
+
+export async function DELETE(_req: NextRequest, { params }: Params) {
+  const headers = await adminHeaders()
+  if (!headers) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+
+  const { id } = await params
+  const res    = await fetch(`${API_URL}/api/v1/admin/categories/${id}`, {
+    method: 'DELETE',
+    headers,
+  })
+  const data = await res.json()
+  return NextResponse.json(data, { status: res.status })
 }

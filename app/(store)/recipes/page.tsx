@@ -1,15 +1,17 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { RECIPES } from '@/lib/recipes'
 
 export const metadata: Metadata = {
   title: 'Recipes',
-  description: 'Credible Kenyan recipes from our community kitchen — tested, trusted, and made for home cooks.',
+  description:
+    'Credible Kenyan recipes from our community kitchen — tested, trusted, and made for home cooks.',
 }
 
 const DIFF_COLOR: Record<string, string> = {
-  Easy:     'bg-terra/10 text-terra',
-  Medium:   'bg-amber-100 text-amber-700',
+  Easy: 'bg-terra/10 text-terra',
+  Medium: 'bg-amber-100 text-amber-700',
   Involved: 'bg-red-50 text-red-500',
 }
 
@@ -21,12 +23,15 @@ export default function RecipesPage() {
       {/* Hero */}
       <section className="bg-earth text-ivory px-4 sm:px-6 py-14 sm:py-20">
         <div className="max-w-4xl mx-auto">
-          <p className="text-[11px] tracking-[0.3em] uppercase text-sienna mb-4 font-medium">From our kitchen</p>
+          <p className="text-[11px] tracking-[0.3em] uppercase text-sienna mb-4 font-medium">
+            From our kitchen
+          </p>
           <h1 className="font-serif text-4xl sm:text-5xl mb-4 leading-tight">
             Recipes worth cooking.
           </h1>
           <p className="text-ivory/50 text-base sm:text-lg max-w-xl">
-            Ten credible Kenyan recipes — from ugali to pilau — written for the home cook using real ingredients and the right tools.
+            Ten credible Kenyan recipes — from ugali to pilau — written for the home cook using real
+            ingredients and the right tools.
           </p>
         </div>
       </section>
@@ -34,17 +39,20 @@ export default function RecipesPage() {
       {/* Recipes grid */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {RECIPES.map(recipe => (
+          {RECIPES.map((recipe) => (
             <Link
               key={recipe.slug}
               href={`/recipes/${recipe.slug}`}
               className="group bg-white rounded-2xl border border-earth/10 overflow-hidden hover:border-earth/25 hover:shadow-md transition-all"
             >
-              {/* Colour plate */}
-              <div className={`${recipe.color} h-44 flex items-center justify-center`}>
-                <span className="font-serif text-5xl opacity-20 select-none">
-                  {recipe.title.charAt(0)}
-                </span>
+              <div className="relative aspect-[4/3] overflow-hidden bg-ivory-dark">
+                <Image
+                  src={recipe.image}
+                  alt={recipe.title}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                />
               </div>
 
               <div className="p-5">
@@ -52,7 +60,9 @@ export default function RecipesPage() {
                   <span className="text-[10px] uppercase tracking-widest text-earth/40 font-medium">
                     {recipe.category}
                   </span>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${DIFF_COLOR[recipe.difficulty]}`}>
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${DIFF_COLOR[recipe.difficulty]}`}
+                  >
                     {recipe.difficulty}
                   </span>
                 </div>

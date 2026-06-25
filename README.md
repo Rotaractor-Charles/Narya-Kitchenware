@@ -6,16 +6,22 @@
 
 ## 1. Project Context
 
-**Narya Kitchenware** — a fully custom B2C kitchenware e-commerce site. Next.js/React/TypeScript frontend and backend (one project), hosted on **Vercel**, fronted by **Cloudflare** for security and edge caching, deployed via **GitHub**.
+**Narya Kitchenware** — a fully custom B2C kitchenware e-commerce site built on a decoupled architecture:
 
-- **Repository:** [github.com/Rotaractor-Charles/Narya-Kitchenware](https://github.com/Rotaractor-Charles/Narya-Kitchenware)
-- **Default branch:** `main`
+- **Frontend:** Next.js (App Router) + React + TypeScript → deployed on **Vercel**
+- **Backend:** Laravel (PHP 8.2+) REST API → deployed separately (Railway / Render / Laravel Forge + DigitalOcean)
+- **Edge security & CDN:** Cloudflare sits in front of both Vercel and the Laravel host
+- **Version control:** GitHub, deployed via CI/CD
+
+- **Frontend repo / working directory:** `Narya-Kitchenware` (this project)
+- **Backend repo:** `narya-backend` (separate Laravel project)
+- **Default branch:** `main` on both repos
 
 Companion documents in this repo:
 
 - `SPEC.md` — full functional and technical specification (source of truth for *what* to build)
 - `CACHING.md` — the caching framework (source of truth for *how caching works*, end to end)
-- `DFD.md` — data flow diagrams showing how data actually moves through the system
+- `DFD.md` — data flow diagrams showing how data moves through the system
 - `README.md` — this file (source of truth for *how* to build, day to day)
 
 If any instruction in a prompt conflicts with these documents, **flag the conflict and ask before proceeding** — don't silently pick one over the other.
@@ -25,22 +31,22 @@ If any instruction in a prompt conflicts with these documents, **flag the confli
 ## 2. The Three Things Every Task Is Checked Against
 
 ### Speed
-- Default to Server Components and Static Generation/ISR — client-side rendering only for genuinely interactive pages (cart, checkout, account).
+- Default to Server Components and Static Generation/ISR on the Next.js side — client-side rendering only for genuinely interactive pages (cart, checkout, account).
 - Stay within budget: LCP < 2.5s, INP < 200ms, CLS < 0.1, initial JS < 150KB gzipped per page.
 - Use `next/image` for all images, no exceptions. Lazy-load anything below the fold.
 - Don't add a third-party script without lazy-loading it and noting its bundle cost.
-- Check for N+1 queries on any listing or product page before considering a database task done.
+- Check for N+1 queries on any listing or product endpoint in Laravel before considering a database task done. Use Eloquent eager loading (`with()`).
 
 ### Security
 - No raw card data ever touches our servers — payments go through Stripe's hosted fields/Elements only.
-- Passwords: bcrypt or argon2, never anything reversible.
-- Sessions/tokens: httpOnly, Secure, SameSite cookies — never `localStorage`.
-- Every API input gets schema-validated (Zod or equivalent) before it touches business logic.
-- All database queries go through the ORM with parameterized queries — never raw, string-concatenated SQL.
-- Admin panel actions require server-side role checks (never trust a client-side check alone) and the account has 2FA.
-- Cloudflare sits in front of everything — don't bypass it, don't weaken its WAF/Bot Management settings to "make something work" without understanding why it was blocking it.
-- Any new npm dependency: check it's maintained, run an audit, and have a reason for adding it.
-- Secrets only ever go in environment variables — never in code, never committed.
+- Passwords: bcrypt (Laravel's default `Hash::make()`) — never anything reversible.
+- Sessions/tokens: Laravel Sanctum issues API tokens stored in the database. The Next.js frontend stores the token in an **httpOnly, Secure, SameSite cookie** — never `localStorage`.
+- Every API input gets validated via Laravel Form Requests (or `$request->validate()`) before it touches business logic.
+- All database queries go through Eloquent with parameterized queries — never raw, string-concatenated SQL.
+- Admin panel actions require server-side role checks (never trust a client-side check alone) and admin accounts have 2FA.
+- Cloudflare sits in front of everything — don't bypass it, don't weaken WAF/Bot Management to "make something work" without understanding why it was blocking.
+- Any new npm or Composer dependency: check it's maintained, run an audit, and have a reason for adding it.
+- Secrets only ever go in environment variables (`.env` for Laravel, `.env.local` for Next.js) — never in code, never committed.
 
 ### Caching
 - **Follow `CACHING.md` exactly — don't improvise a one-off caching solution for a single page.**
@@ -51,112 +57,161 @@ Full detail on all three is in `SPEC.md` (Sections 3 & 4) and `CACHING.md`. This
 
 ---
 
-## 3. Hosting & Deployment Workflow (Vercel + Cloudflare + GitHub)
+## 3. Architecture Overview
 
-### Repository Setup (reference — already done for this project)
-The local project folder is connected to GitHub like this:
-
-```bash
-git remote add origin https://github.com/Rotaractor-Charles/Narya-Kitchenware.git
-git branch -M main
-git push -u origin main
+```
+Browser
+  → Cloudflare (DNS, proxied)
+      WAF, DDoS, Bot Management, rate limiting, edge cache
+    → Vercel (Next.js frontend)
+        Server Components, ISR/SSG, Next.js fetch cache
+      → Laravel API (separate host — Railway / Forge)
+          REST API, business logic, Eloquent ORM
+        → Redis  — application cache (catalog, search, sessions, cart)
+        → MySQL / PostgreSQL  — source of truth
+        → External services (Stripe, email, search, shipping, CMS)
 ```
 
-If a fresh clone or a new machine ever needs to be reconnected, this is the reference. Don't re-run `git remote add origin` if a remote is already configured — use `git remote set-url origin <url>` instead, or it will error.
-
-Next step after this: import the repository into Vercel (New Project → Import Git Repository → select `Narya-Kitchenware`) so pushes to `main` start deploying automatically, and connect the domain in Cloudflare per the DNS section below.
-
-- **Repo:** This local folder is connected to a GitHub repository (private). All work happens through git.
-- **`main` branch = production.** Vercel is connected directly to this GitHub repo. A push/merge to `main` automatically triggers a production deployment.
-- **Never commit or push directly to `main`.** Always work on a feature branch and open a pull request, even solo — this gets a Vercel Preview Deployment URL per branch for testing, and a clean rollback point.
-- **Branch naming:** `feature/short-description`, `fix/short-description`, `chore/short-description`.
-- **Before merging a PR:** check the preview deployment manually, and confirm CI passes (lint, type-check, tests, performance check, dependency audit — Section 5).
-
-### DNS & Cloudflare
-- Domain DNS is managed in **Cloudflare**, proxied ("orange-clouded") in front of Vercel — this is what puts Cloudflare's WAF, Bot Management, and rate limiting in the request path.
-- **SSL/TLS mode: Full (Strict).** Vercel already terminates TLS with a valid certificate — do not use "Flexible" mode, it leaves the Cloudflare-to-Vercel hop unencrypted.
-- WAF managed rulesets and Bot Management/Super Bot Fight Mode are enabled by default — don't disable them to debug something faster; figure out why a request is being blocked instead.
-- Rate limiting rules exist on login, password reset, checkout, and public API routes — don't remove these without understanding the tradeoff.
-- Cloudflare Cache Rules follow `CACHING.md` Section 4 exactly — the default posture is "respect origin headers," not "cache everything."
-- Admin panel is additionally gated by Cloudflare Access — don't bypass this for convenience during development; use a proper dev/staging path instead.
-
-### Environment Variables
-- Live in the Vercel dashboard (Project Settings → Environment Variables), scoped per environment (Production / Preview / Development). Never hardcoded, never committed.
-- Local development uses `.env.local` — confirm it's in `.gitignore` before the first commit.
-
-### Architecture Note
-- Keep the backend inside the same Next.js project (API Routes/Route Handlers/Server Actions) rather than a separate service — the whole app deploys as one unit through Vercel + GitHub. Only introduce a separate service for a concrete technical reason (e.g., a long-running background job that doesn't fit a serverless function), and treat that as a deliberate, documented exception.
+**Key principle:** Next.js handles rendering and the UI; Laravel owns all business logic, data writes, auth, and integrations. Next.js never writes directly to the database — it always goes through the Laravel API.
 
 ---
 
-## 4. Before Writing Any Code — Checklist
+## 4. Hosting & Deployment Workflow
+
+### Frontend (Next.js → Vercel)
+- Connected to GitHub (`Narya-Kitchenware` repo). Push/merge to `main` triggers production deployment automatically.
+- Every PR gets a Vercel Preview URL for testing before merge.
+- Never push directly to `main` — always open a PR.
+
+### Backend (Laravel → Railway / Forge)
+- Connected to GitHub (`narya-backend` repo). Push/merge to `main` triggers deployment.
+- Migrations run as part of the deploy pipeline (`php artisan migrate --force`).
+- Separate staging and production environments with separate credentials.
+
+### Branch naming
+`feature/short-description`, `fix/short-description`, `chore/short-description`
+
+### Before merging a PR
+Check the preview deployment manually; confirm CI passes (lint, type-check, tests, performance check, dependency audit).
+
+### DNS & Cloudflare
+- Domain DNS managed in Cloudflare, proxied ("orange-clouded") in front of Vercel AND the Laravel host.
+- **SSL/TLS mode: Full (Strict)** for both origins.
+- WAF managed rulesets and Bot Management enabled — don't disable them to debug faster.
+- Rate limiting rules on login, password reset, checkout, and public API routes.
+- Admin panel additionally gated by Cloudflare Access.
+
+### Environment Variables
+- **Next.js:** Vercel dashboard → Environment Variables, scoped per environment. Local: `.env.local` (gitignored).
+- **Laravel:** Railway/Forge dashboard, or `.env` file on the server. Local: `.env` (gitignored).
+- Never hardcode secrets. Never commit `.env` or `.env.local`.
+
+---
+
+## 5. Before Writing Any Code — Checklist
 
 Run through this on every task, every prompt:
 
-1. Does this touch the database? → Check indexing, avoid N+1 queries.
-2. Does this touch user input? → Validate with a schema; never trust client input.
-3. Does this touch auth, sessions, or the admin panel? → httpOnly cookies, server-side role checks, 2FA for admin.
+1. Does this touch the database? → Check indexing, use Eloquent eager loading, avoid N+1 queries.
+2. Does this touch user input? → Validate with a Laravel Form Request or `$request->validate()`; never trust client input.
+3. Does this touch auth, sessions, or the admin panel? → httpOnly cookies on the frontend, Sanctum token auth on the API, server-side role checks, 2FA for admin.
 4. Does this touch caching at any layer? → Follow `CACHING.md`; never cache personalized, cart, checkout, or admin data.
-5. Does this add a new dependency? → Confirm it's maintained, run an audit, have a reason for it.
+5. Does this add a new dependency (npm or Composer)? → Confirm it's maintained, run an audit, have a reason for it.
 6. Does this add a third-party script to the frontend? → Lazy-load it, note the bundle size impact.
 7. Does this add or change an image? → Use `next/image`, correct format, lazy-load if below the fold.
 8. Does this touch a customer-facing page? → Confirm it still meets the Core Web Vitals budgets in Section 2.
 9. Does this touch a secret or API key? → Belongs in environment variables, never in code.
-10. Does this touch Cloudflare settings (WAF, cache rules, Access)? → Treat as configuration that should be documented/version-controlled, not a one-off dashboard click that nobody remembers later.
-11. Is this going to `main`? → It shouldn't be — open a PR and let Vercel generate a preview first.
+10. Does this touch Cloudflare settings (WAF, cache rules, Access)? → Treat as configuration that should be documented/version-controlled, not a one-off dashboard click.
+11. Is this going to `main`? → It shouldn't be — open a PR and let Vercel/CI generate a preview first.
 
 ---
 
-## 5. Code Quality & CI Standards
+## 6. Code Quality & CI Standards
 
+### Next.js (Frontend)
 - TypeScript strict mode is on — don't weaken it to silence an error.
-- ESLint + Prettier are enforced — fix lint errors, don't disable rules to get around them.
+- ESLint + Prettier enforced — fix lint errors, don't disable rules.
 - Avoid `any`; if unavoidable, leave a comment explaining why.
 - Keep components small and single-purpose.
+- CI on every PR: lint, type-check, tests, Lighthouse CI (against budgets in Section 2), dependency scan.
+
+### Laravel (Backend)
+- PHP 8.2+, strict types enabled (`declare(strict_types=1)` at top of every file).
+- PHP CS Fixer or Laravel Pint for code style — enforced in CI.
+- PHPStan (level 8 target) for static analysis.
+- Feature tests for every API endpoint (use `RefreshDatabase` + Laravel's HTTP test helpers).
+- Unit tests for pricing, discount, and inventory logic.
+- CI on every PR: Pint, PHPStan, PHPUnit, dependency audit (`composer audit`).
+
+### Shared
 - Commit messages follow conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`.
-- CI on every PR runs: lint, type-check, automated tests, a performance check (Lighthouse CI against the budgets in Section 2), and a dependency vulnerability scan. A PR failing any of these shouldn't merge without explicit sign-off.
+- A PR failing any CI check shouldn't merge without explicit sign-off.
 
 ---
 
-## 6. Suggested Folder Structure
+## 7. Folder Structure
 
+### Next.js Frontend
 ```
-/app                  → Next.js App Router pages & layouts
+/app                  → App Router pages & layouts
 /components           → Reusable UI components
-/lib                  → Shared utilities, API clients, validation schemas, Redis client
-/server               → API route handlers / server actions, business logic
-/prisma               → Database schema & migrations
+/lib                  → API client (calls Laravel), utilities, validation schemas
 /public               → Static assets
-SPEC.md                → Full functional & technical specification
-CACHING.md             → Cache framework specification
-DFD.md                  → Data flow diagrams
+SPEC.md               → Full functional & technical specification
+CACHING.md            → Cache framework specification
+DFD.md                → Data flow diagrams
 README.md             → This file
-.env.local             → Local secrets (gitignored, never committed)
+.env.local            → Local secrets (gitignored)
+```
+
+### Laravel Backend (separate repo: narya-backend)
+```
+/app
+  /Http/Controllers/Api   → API controllers
+  /Http/Requests          → Form Request validation classes
+  /Models                 → Eloquent models
+  /Services               → Business logic (OrderService, InventoryService, etc.)
+  /Jobs                   → Queued jobs (emails, cache invalidation, etc.)
+  /Policies               → Authorization policies (RBAC)
+/database
+  /migrations             → Database schema migrations
+  /seeders                → Seed data
+/routes
+  /api.php                → All API routes (versioned: /api/v1/...)
+/config                   → Laravel config files
+/tests
+  /Feature                → API endpoint tests
+  /Unit                   → Business logic unit tests
+.env                      → Local secrets (gitignored)
 ```
 
 ---
 
-## 7. When Uncertain
+## 8. API Communication (Next.js ↔ Laravel)
 
-If a task is ambiguous, touches a security-, performance-, or caching-sensitive area, or seems to conflict with `SPEC.md` or `CACHING.md`, **pause and ask** rather than guessing. Reference the relevant section when asking, so the answer can be folded back into the documentation for next time.
+- All API calls from Next.js to Laravel go through a central `lib/api.ts` client — never call the Laravel base URL directly from components.
+- API versioning: `/api/v1/` prefix on all Laravel routes from day one.
+- Auth: Next.js sends the Sanctum token as a Bearer token in the `Authorization` header (stored in an httpOnly cookie, passed server-side).
+- Laravel API responses always return JSON. Error responses follow a consistent structure: `{ message, errors? }`.
+- Use Next.js `fetch` with `cache` and `next.revalidate` options on Server Component fetches for ISR behaviour — don't duplicate caching logic on the Laravel side for the same data.
 
 ---
 
-## 8. Do Not
+## 9. Do Not
 
-- Don't push or commit directly to `main`.
-- Don't store secrets, API keys, or credentials in code or commit them to the repo.
-- Don't store auth tokens in `localStorage`.
-- Don't write raw, string-concatenated SQL.
+- Don't push or commit directly to `main` on either repo.
+- Don't store secrets, API keys, or credentials in code or commit them.
+- Don't store auth tokens in `localStorage` — httpOnly cookies only.
+- Don't write raw, string-concatenated SQL — use Eloquent or query builder with parameterized bindings.
 - Don't add a third-party script without checking its performance cost.
 - Don't skip 2FA or server-side role checks on admin functionality.
 - Don't merge a PR with failing CI checks.
-- Don't introduce a second backend service "just because" — the default is one unified Next.js app on Vercel.
+- Don't skip Laravel Form Request validation and let raw `$request->all()` reach business logic.
 - Don't set Cloudflare to "Cache Everything" globally, or disable WAF/Bot Management to make development more convenient.
 - Don't cache cart, checkout, account, or admin responses at any layer — ever.
-- Don't rely on TTL alone to invalidate a cache entry for data changed via an admin action — wire up explicit invalidation per `CACHING.md`.
+- Don't rely on TTL alone to invalidate a cache entry changed via an admin action — wire up explicit invalidation per `CACHING.md`.
+- Don't use N+1 queries — always eager-load Eloquent relationships.
 
 ---
 
 *This file should evolve as the project does. If a recurring mistake or question comes up across multiple tasks, add a rule here so it doesn't have to be re-explained every time.*
-# Narya-Kitchenware

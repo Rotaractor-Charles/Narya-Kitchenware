@@ -1,23 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminAuth } from '@/lib/firebase-admin'
-import { createSession } from '@/lib/session'
+import { serverLogin } from '@/lib/api/auth'
+import { ApiError } from '@/lib/api'
+import { setTokenCookie } from '@/lib/api/cookie'
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const { idToken } = await req.json()
+    const { email, password } = await request.json()
+    const { user, token } = await serverLogin(email, password)
 
-    if (!idToken || typeof idToken !== 'string') {
-      return NextResponse.json({ error: 'ID token is required' }, { status: 400 })
-    }
-
-    // Verify the token is legitimate before issuing a session cookie
-    await adminAuth.verifyIdToken(idToken)
-
-    await createSession(idToken)
-
-    return NextResponse.json({ success: true })
+    const response = NextResponse.json({ user })
+    setTokenCookie(response, token)
+    return response
   } catch (err) {
-    console.error('[/api/auth/login]', err)
-    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+    if (err instanceof ApiError) {
+      return NextResponse.json(err.data, { status: err.status })
+    }
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }

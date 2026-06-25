@@ -151,8 +151,12 @@ export default function ProductForm({ product, mode }: { product?: Product; mode
   const [visType,           setVisType]           = useState<VisType>('public')
   const [visPassword,       setVisPassword]       = useState('')
 
-  // Media
-  const [images, setImages] = useState<string[]>(product?.images?.length ? product.images : [''])
+  // Media — normalise ProductImage[] objects to URL strings
+  const [images, setImages] = useState<string[]>(
+    product?.images?.length
+      ? product.images.map(img => (typeof img === 'string' ? img : (img as { url: string }).url))
+      : ['']
+  )
 
   // Organisation — categories is now string[]
   const [categories, setCategories] = useState<string[]>(
@@ -853,57 +857,60 @@ export default function ProductForm({ product, mode }: { product?: Product; mode
             </div>
           </div>
 
-          {/* Product image */}
+          {/* Images */}
           <div className="bg-[#1a2a1a] border border-white/8 rounded-xl overflow-hidden">
             <div className="border-b border-white/8 px-4 py-2.5">
-              <span className="text-xs font-semibold text-ivory/50">Product image</span>
+              <span className="text-xs font-semibold text-ivory/50">Product images</span>
             </div>
-            <div className="p-4">
-              {images[0]
-                ? <div className="w-full aspect-square rounded-lg overflow-hidden bg-white/5 mb-3 border border-white/8">
-                    <img src={images[0]} alt="" className="w-full h-full object-contain opacity-80" />
-                  </div>
-                : <div className="w-full aspect-square rounded-lg bg-white/4 border border-dashed border-white/15 mb-3 flex items-center justify-center">
-                    <span className="text-ivory/15 text-xs">No image</span>
-                  </div>
-              }
-              <input type="text" value={images[0] ?? ''} onChange={e => updImg(0, e.target.value)}
-                placeholder="Paste image URL…"
-                className="w-full bg-white/5 border border-white/12 rounded-lg px-2.5 py-1.5 text-xs text-ivory placeholder:text-ivory/20 focus:outline-none focus:border-white/30" />
-              {images[0] && (
-                <button onClick={() => updImg(0, '')} className="mt-1.5 text-xs text-red-400/50 hover:text-red-400 transition-colors">Remove image</button>
-              )}
-            </div>
-          </div>
-
-          {/* Gallery */}
-          <div className="bg-[#1a2a1a] border border-white/8 rounded-xl overflow-hidden">
-            <div className="border-b border-white/8 px-4 py-2.5">
-              <span className="text-xs font-semibold text-ivory/50">Product gallery</span>
-            </div>
-            <div className="p-4 space-y-2">
-              {images.slice(1).length > 0 && (
-                <div className="grid grid-cols-3 gap-1.5 mb-2">
-                  {images.slice(1).map((img, i) => (
+            <div className="p-4 space-y-3">
+              {/* Grid of current images */}
+              {images.filter(Boolean).length > 0 && (
+                <div className="grid grid-cols-3 gap-1.5">
+                  {images.map((img, i) => img ? (
                     <div key={i} className="relative group aspect-square bg-white/5 rounded border border-white/8 overflow-hidden">
-                      {img
-                        ? <img src={img} alt="" className="w-full h-full object-cover opacity-70" />
-                        : <div className="w-full h-full flex items-center justify-center text-ivory/15 text-[10px]">URL</div>
-                      }
-                      <button onClick={() => rmImg(i + 1)}
-                        className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/70 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center leading-none">
-                        ×
-                      </button>
+                      <img src={img} alt="" className="w-full h-full object-contain p-1 opacity-80" />
+                      {i === 0 && (
+                        <span className="absolute bottom-0 left-0 right-0 text-center text-[9px] bg-sienna/80 text-ivory py-0.5">Primary</span>
+                      )}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                        {i !== 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setImages(prev => [img, ...prev.filter((_, idx) => idx !== i)])}
+                            className="text-[9px] text-white bg-sienna/80 px-1.5 py-0.5 rounded">
+                            Set primary
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => rmImg(i)}
+                          className="text-[9px] text-white bg-red-500/70 px-1.5 py-0.5 rounded">
+                          Remove
+                        </button>
+                      </div>
                     </div>
-                  ))}
+                  ) : null)}
                 </div>
               )}
-              {images.slice(1).map((img, i) => (
-                <input key={i} type="text" value={img} onChange={e => updImg(i + 1, e.target.value)}
-                  placeholder={`Gallery image ${i + 1} URL`}
-                  className="w-full bg-white/5 border border-white/12 rounded px-2.5 py-1.5 text-xs text-ivory placeholder:text-ivory/20 focus:outline-none focus:border-white/30" />
+
+              {/* URL inputs */}
+              {images.map((img, i) => (
+                <div key={i} className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={img}
+                    onChange={e => updImg(i, e.target.value)}
+                    placeholder={i === 0 ? 'Primary image URL…' : `Gallery image ${i} URL`}
+                    className="flex-1 bg-white/5 border border-white/12 rounded px-2.5 py-1.5 text-xs text-ivory placeholder:text-ivory/20 focus:outline-none focus:border-white/30"
+                  />
+                  {images.length > 1 && (
+                    <button type="button" onClick={() => rmImg(i)} className="text-ivory/20 hover:text-red-400 text-base leading-none shrink-0">×</button>
+                  )}
+                </div>
               ))}
-              <button onClick={addImg} className="text-xs text-blue-400 hover:text-blue-300 transition-colors">+ Add gallery image</button>
+              <button type="button" onClick={addImg} className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                + Add image
+              </button>
             </div>
           </div>
 

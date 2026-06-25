@@ -1,26 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/session'
-import { updateAdminBrand, deleteAdminBrand } from '@/lib/brands-admin'
+import { cookies } from 'next/headers'
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { id } = await params
-  const data = await request.json()
-  await updateAdminBrand(id, data)
-  return NextResponse.json({ success: true })
+const API_URL = process.env.API_URL ?? 'http://localhost:8000'
+
+type Params = { params: Promise<{ id: string }> }
+
+async function adminHeaders(): Promise<Record<string, string> | null> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('narya_token')?.value
+  if (!token) return null
+  return {
+    Authorization:  `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    Accept:         'application/json',
+  }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const session = await getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalise(body: any) {
+  const out = { ...body }
+  if ('thumbnail' in out) { out.logo = out.thumbnail; delete out.thumbnail }
+  if ('order'     in out) { out.sort_order = out.order; delete out.order }
+  return out
+}
+
+export async function PATCH(request: NextRequest, { params }: Params) {
+  const headers = await adminHeaders()
+  if (!headers) return NextResponse.json({ message: 'Unauthenticated.' }, { status: 401 })
+
   const { id } = await params
-  await deleteAdminBrand(id)
-  return NextResponse.json({ success: true })
+  const body   = normalise(await request.json())
+  const res    = await fetch(`${API_URL}/api/v1/admin/brands/${id}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(body),
+  })
+  const data = await res.json()
+  return NextResponse.json(data, { status: res.status })
+}
+
+export async function DELETE(_req: NextRequest, { params }: Params) {
+  const headers = await adminHeaders()
+  if (!headers) return NextResponse.json({ message: 'Unauthenticated.' }, { status: 401 })
+
+  const { id } = await params
+  const res    = await fetch(`${API_URL}/api/v1/admin/brands/${id}`, {
+    method:  'DELETE',
+    headers,
+  })
+
+  if (res.status === 204) return new NextResponse(null, { status: 204 })
+  const data = await res.json()
+  return NextResponse.json(data, { status: res.status })
 }
