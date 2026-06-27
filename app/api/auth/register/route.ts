@@ -15,6 +15,9 @@ export async function POST(request: NextRequest) {
     if (err instanceof ApiError) {
       return NextResponse.json(err.data, { status: err.status })
     }
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
+    return NextResponse.json(
+      { message: 'The Narya API is not reachable. Start the API server and try again.' },
+      { status: 503 },
+    )
   }
 }
