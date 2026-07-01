@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'About Us',
-  description: 'The family story behind Narya Kitchenware.',
+  title: 'About Narya Kitchenware | Family-Owned Kitchen Brand, Nairobi Kenya',
+  description: 'Narya Kitchenware is a 100% family-owned business built in Kenya. Founded by Charles and Faith Kamau Macharia, we hand-pick quality cookware, knives, and kitchen tools for the Kenyan home cook.',
 }
 
 const VALUES = [

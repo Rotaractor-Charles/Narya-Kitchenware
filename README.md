@@ -17,11 +17,13 @@
 - **Backend repo:** `narya-backend` (separate Laravel project)
 - **Default branch:** `main` on both repos
 
-Companion documents in this repo:
+Companion documents in this repo (all in `docs/`):
 
-- `SPEC.md` — full functional and technical specification (source of truth for *what* to build)
-- `CACHING.md` — the caching framework (source of truth for *how caching works*, end to end)
-- `DFD.md` — data flow diagrams showing how data moves through the system
+- `docs/SPEC.md` — full functional and technical specification (source of truth for *what* to build)
+- `docs/CACHING.md` — the caching framework (source of truth for *how caching works*, end to end)
+- `docs/DFD.md` — data flow diagrams showing how data moves through the system
+- `docs/SECURITY.md` — security guidelines, coding rules, and pre-deployment checklist
+- `docs/ONBOARDING.md` — new developer / maintainer setup guide
 - `README.md` — this file (source of truth for *how* to build, day to day)
 
 If any instruction in a prompt conflicts with these documents, **flag the conflict and ask before proceeding** — don't silently pick one over the other.
@@ -53,7 +55,7 @@ If any instruction in a prompt conflicts with these documents, **flag the confli
 - Never cache cart, checkout, account, or admin routes at any layer (browser, Cloudflare, Redis) — verify this by checking response headers, not by assuming.
 - Any change to a product, category, or content page that should be reflected immediately needs its cache invalidation wired up (on-demand ISR revalidation + Cloudflare purge), not left to TTL alone.
 
-Full detail on all three is in `SPEC.md` (Sections 3 & 4) and `CACHING.md`. This section is the quick-reference version to keep in mind on every task.
+Full detail on all three is in `docs/SPEC.md` (Sections 3 & 4) and `docs/CACHING.md`. This section is the quick-reference version to keep in mind on every task.
 
 ---
 
@@ -157,10 +159,19 @@ Run through this on every task, every prompt:
 /components           → Reusable UI components
 /lib                  → API client (calls Laravel), utilities, validation schemas
 /public               → Static assets
-SPEC.md               → Full functional & technical specification
-CACHING.md            → Cache framework specification
-DFD.md                → Data flow diagrams
-README.md             → This file
+/scripts              → One-off utility scripts
+/docs                 → All project documentation
+  SPEC.md             → Full functional & technical specification
+  CACHING.md          → Cache framework specification
+  DFD.md              → Data flow diagrams
+  SECURITY.md         → Security guidelines & pre-deployment checklist
+  ONBOARDING.md       → New developer / maintainer guide
+  BACKEND_DFD.md      → Backend data flow diagrams
+  HOMEPAGE.md         → Homepage section layout spec
+  brand/              → Logo HTML references
+  prototypes/         → Standalone HTML page mockups
+  superpowers/plans/  → Implementation plan archives
+README.md             → This file (how to build, day to day)
 .env.local            → Local secrets (gitignored)
 ```
 

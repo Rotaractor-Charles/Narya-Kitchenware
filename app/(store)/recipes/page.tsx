@@ -4,9 +4,9 @@ import Link from 'next/link'
 import { RECIPES } from '@/lib/recipes'
 
 export const metadata: Metadata = {
-  title: 'Recipes',
+  title: 'Kenyan Recipes — Ugali, Pilau, Nyama Choma & More | Narya Kitchenware',
   description:
-    'Credible Kenyan recipes from our community kitchen — tested, trusted, and made for home cooks.',
+    'Ten credible Kenyan recipes — ugali, sukuma wiki, pilau, nyama choma, chapati, mandazi, and more. Written for home cooks using real ingredients and the right tools.',
 }
 
 const DIFF_COLOR: Record<string, string> = {

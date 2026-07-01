@@ -140,7 +140,7 @@ export default function AdminDiscountsPage() {
                     </td>
                     <td className="py-2.5 text-right">
                       <Link
-                        href={`/admin/products/${p.id}/edit`}
+                        href={`/admin/products/${p.id}`}
                         className="text-ivory/30 hover:text-ivory opacity-0 group-hover:opacity-100 transition-opacity text-[11px]"
                       >
                         Edit →

@@ -65,6 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
+    // Clear any browser storage that might hold user-related state
+    try { localStorage.clear() } catch { /* sandboxed env */ }
+    try { sessionStorage.clear() } catch { /* sandboxed env */ }
     setUser(null)
   }, [])
 

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import RegisterForm from '@/components/auth/RegisterForm'
 
-export const metadata: Metadata = { title: 'Create Account' }
+export const metadata: Metadata = { title: 'Create Account', robots: { index: false } }
 
 export default function RegisterPage() {
   return (

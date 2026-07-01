@@ -7,6 +7,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const { q } = await searchParams
   return {
     title: q ? `Search results for "${q}" — Narya Kitchenware` : 'Search — Narya Kitchenware',
+    robots: { index: false, follow: true },
   }
 }
 

@@ -14,7 +14,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const recipe = getRecipeBySlug(slug)
   if (!recipe) return {}
-  return { title: recipe.title, description: recipe.tagline }
+  return {
+    title:       recipe.title,
+    description: recipe.tagline,
+    alternates: { canonical: `/recipes/${recipe.slug}` },
+    openGraph: {
+      title:       `${recipe.title} | Narya Kitchenware`,
+      description: recipe.tagline,
+      url:         `/recipes/${recipe.slug}`,
+      type:        'article',
+    },
+  }
 }
 
 const DIFF_COLOR: Record<string, string> = {
@@ -30,7 +40,41 @@ export default async function RecipePage({ params }: Props) {
 
   const others = RECIPES.filter((r) => r.slug !== recipe.slug).slice(0, 3)
 
+  // Convert human time strings like "1 hr 15 min" or "20 min + 4 hr marinating" to ISO 8601
+  function toISO8601Duration(raw: string): string {
+    const base = raw.split(/[+(]/)[0].trim() // discard "+ soaking", "(including ...)" etc.
+    const hrs = base.match(/(\d+)\s*hr/)?.[1] ?? '0'
+    const mins = base.match(/(\d+)\s*min/)?.[1] ?? '0'
+    const h = parseInt(hrs, 10)
+    const m = parseInt(mins, 10)
+    return `PT${h > 0 ? `${h}H` : ''}${m > 0 ? `${m}M` : '0M'}`
+  }
+
+  const recipeSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Recipe',
+    name: recipe.title,
+    description: recipe.tagline,
+    image: [`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://narya.co.ke'}${recipe.image}`],
+    author: { '@type': 'Organization', name: 'Narya Kitchenware' },
+    prepTime: toISO8601Duration(recipe.prepTime),
+    cookTime: toISO8601Duration(recipe.cookTime),
+    totalTime: toISO8601Duration(recipe.totalTime),
+    recipeYield: `${recipe.servings} servings`,
+    recipeCategory: recipe.category,
+    recipeCuisine: 'Kenyan',
+    recipeIngredient: recipe.ingredients.filter(i => !i.startsWith('—')),
+    recipeInstructions: recipe.instructions.map((inst, i) => ({
+      '@type': 'HowToStep',
+      position: i + 1,
+      name: inst.step,
+      text: inst.detail,
+    })),
+  }
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(recipeSchema) }} />
     <div>
       {/* Hero image */}
       <div className="relative h-60 sm:h-80 flex items-end overflow-hidden bg-earth">
@@ -212,5 +256,6 @@ export default async function RecipePage({ params }: Props) {
         </div>
       </div>
     </div>
+    </>
   )
 }

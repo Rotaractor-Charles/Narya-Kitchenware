@@ -8,6 +8,192 @@ import { useCart } from '@/lib/cart-context'
 import { useAuth } from '@/lib/auth-context'
 import type { Product } from '@/lib/types'
 
+// ─── Notification types ───────────────────────────────────────────────────────
+type CustomerNotification = {
+  id: number
+  type: string
+  emoji: string
+  title: string
+  body: string
+  action_url: string | null
+  read_at: string | null
+  created_at: string
+}
+
+function useNotifications(isLoggedIn: boolean) {
+  const [notifications, setNotifications] = useState<CustomerNotification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  const fetch_ = useCallback(async () => {
+    if (!isLoggedIn) return
+    try {
+      const res = await fetch('/api/notifications')
+      if (!res.ok) return
+      const data = await res.json()
+      setNotifications(data.data ?? [])
+      setUnreadCount(data.unread_count ?? 0)
+    } catch {
+      // silently ignore
+    }
+  }, [isLoggedIn])
+
+  useEffect(() => {
+    fetch_()
+    if (!isLoggedIn) return
+    const id = setInterval(fetch_, 30_000)
+    return () => clearInterval(id)
+  }, [isLoggedIn, fetch_])
+
+  const markRead = useCallback(async (id: number) => {
+    await fetch(`/api/notifications/${id}/read`, { method: 'PATCH' })
+    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
+    setUnreadCount((c) => Math.max(0, c - 1))
+  }, [])
+
+  const markAllRead = useCallback(async () => {
+    await fetch('/api/notifications/read-all', { method: 'POST' })
+    setNotifications((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() })))
+    setUnreadCount(0)
+  }, [])
+
+  return { notifications, unreadCount, markRead, markAllRead }
+}
+
+function timeAgo(iso: string): string {
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000
+  if (diff < 60) return 'just now'
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+  return `${Math.floor(diff / 86400)}d ago`
+}
+
+function NotificationBell({ isLoggedIn }: { isLoggedIn: boolean }) {
+  const [open, setOpen] = useState(false)
+  const [expandedId, setExpandedId] = useState<number | null>(null)
+  const ref = useRef<HTMLDivElement>(null)
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications(isLoggedIn)
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  if (!isLoggedIn) return null
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Notifications"
+        className="relative flex w-8 h-8 sm:w-auto sm:h-auto sm:p-2 items-center justify-center text-forest/55 hover:text-forest transition-colors"
+      >
+        {/* Bell SVG */}
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+        {unreadCount > 0 && (
+          <span className="absolute top-1 right-1 bg-terra text-ivory text-[9px] font-bold min-w-[14px] h-[14px] px-0.5 rounded-full flex items-center justify-center leading-none">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="fixed left-2 right-2 top-[79px] z-50 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[360px] rounded-2xl border border-forest/10 bg-white shadow-xl overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-forest/8">
+            <span className="font-semibold text-forest text-sm">Notifications</span>
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllRead}
+                className="text-[11px] text-terra hover:text-terra/70 font-medium transition-colors"
+              >
+                Mark all read
+              </button>
+            )}
+          </div>
+
+          {/* List */}
+          <div className="max-h-[60vh] sm:max-h-[420px] overflow-y-auto divide-y divide-forest/5">
+            {notifications.length === 0 ? (
+              <div className="py-10 text-center text-sm text-forest/40">
+                <div className="text-3xl mb-2">🔔</div>
+                You&apos;re all caught up!
+              </div>
+            ) : (
+              notifications.map((n) => {
+                const isExpanded = expandedId === n.id
+                return (
+                  <div
+                    key={n.id}
+                    className={`relative cursor-pointer transition-colors ${
+                      isExpanded
+                        ? 'bg-terra/8 border-b border-terra/10'
+                        : !n.read_at
+                        ? 'bg-terra/5 hover:bg-terra/8'
+                        : 'hover:bg-forest/[0.03]'
+                    }`}
+                    onClick={() => {
+                      setExpandedId(isExpanded ? null : n.id)
+                      if (!n.read_at) markRead(n.id)
+                    }}
+                  >
+                    {/* Unread dot */}
+                    {!n.read_at && (
+                      <span className="absolute left-2.5 top-4 w-1.5 h-1.5 rounded-full bg-terra" />
+                    )}
+
+                    <div className="flex gap-3 items-start px-3 py-3 pl-5">
+                      <span className="text-lg leading-none mt-0.5 shrink-0">{n.emoji}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-[12px] font-semibold text-forest leading-snug">{n.title}</p>
+                          <span className="text-[10px] text-forest/35 shrink-0 mt-0.5 whitespace-nowrap">{timeAgo(n.created_at)}</span>
+                        </div>
+                        <p className={`text-[11px] text-forest/60 mt-1 leading-relaxed ${isExpanded ? '' : 'line-clamp-2'}`}>
+                          {n.body}
+                        </p>
+
+                        {/* Expanded CTA */}
+                        {isExpanded && n.action_url && (
+                          <Link
+                            href={n.action_url}
+                            onClick={(e) => { e.stopPropagation(); setOpen(false) }}
+                            className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-terra px-4 py-2 text-[11px] font-semibold text-ivory hover:bg-terra/85 transition-colors"
+                          >
+                            View order details →
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Expand hint when collapsed */}
+                    {!isExpanded && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-forest/20 text-xs">›</div>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-forest/8 px-4 py-2.5 text-center">
+            <Link href="/notifications" onClick={() => setOpen(false)} className="text-[11px] text-terra hover:underline font-medium">
+              View all notifications
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function LogoMark() {
   return (
     <svg viewBox="0 0 48 64" width="17" height="23" aria-hidden="true" className="shrink-0">
@@ -33,20 +219,7 @@ function LogoMark() {
   )
 }
 
-const CATEGORIES = [
-  { href: '/shop/cookware', label: 'Cookware' },
-  { href: '/shop/bakeware', label: 'Bakeware' },
-  { href: '/shop/cutlery', label: 'Cutlery & Knives' },
-  { href: '/shop/appliances', label: 'Small Appliances' },
-  { href: '/shop/storage', label: 'Storage & Org' },
-  { href: '/shop/utensils', label: 'Utensils & Gadgets' },
-  { href: '/shop/dinnerware', label: 'Dinnerware' },
-  { href: '/shop/coffee-tea', label: 'Coffee & Tea' },
-  { href: '/shop/outdoor', label: 'Outdoor & BBQ' },
-  { href: '/shop/cleaning', label: 'Cleaning & Care' },
-  { href: '/shop/new', label: 'New Arrivals' },
-  { href: '/shop/sale', label: 'Sale' },
-]
+type NavItem = { id: number; label: string; href: string; children: NavItem[] }
 
 function fmt(cents: number) {
   return `KSh ${(cents / 100).toLocaleString('en-KE', { minimumFractionDigits: 0 })}`
@@ -102,7 +275,7 @@ function SearchBox({ onClose, autoFocus = false }: { onClose?: () => void; autoF
   function handleSelect(slug: string) {
     setOpen(false)
     onClose?.()
-    router.push(`/products/${slug}`)
+    router.push(`/product/${slug}`)
   }
 
   return (
@@ -200,7 +373,13 @@ function SearchBox({ onClose, autoFocus = false }: { onClose?: () => void; autoF
   )
 }
 
-export default function Navbar() {
+export default function Navbar({
+  desktopNav = [],
+  mobileNav = [],
+}: {
+  desktopNav?: NavItem[]
+  mobileNav?: NavItem[]
+}) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -386,6 +565,8 @@ export default function Navbar() {
               </svg>
             </Link>
 
+            <NotificationBell isLoggedIn={!!user} />
+
             <button
               onClick={openCart}
               aria-label="My Cart"
@@ -449,10 +630,10 @@ export default function Navbar() {
           <div className="pointer-events-none absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-ivory to-transparent z-10" />
           <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-ivory to-transparent z-10" />
           <ul className="flex items-center gap-0 overflow-x-auto scrollbar-hide max-w-7xl mx-auto px-6 h-9">
-            {CATEGORIES.map(({ href, label }) => {
+            {desktopNav.map(({ id, href, label }) => {
               const active = pathname === href || pathname.startsWith(href + '/')
               return (
-                <li key={href} className="shrink-0">
+                <li key={id} className="shrink-0">
                   <Link
                     href={href}
                     className={`flex items-center px-3 h-9 text-[11.5px] font-bold tracking-wide whitespace-nowrap transition-colors duration-150 border-b-2 ${
@@ -480,10 +661,10 @@ export default function Navbar() {
         {mobileOpen && (
           <div className="lg:hidden border-t border-forest/10 bg-cream px-5 py-5">
             <ul className="grid grid-cols-2 gap-x-4 gap-y-1 mb-4">
-              {CATEGORIES.map(({ href, label }) => {
+              {(mobileNav.length > 0 ? mobileNav : desktopNav).map(({ id, href, label }) => {
                 const active = pathname === href || pathname.startsWith(href + '/')
                 return (
-                  <li key={href}>
+                  <li key={id}>
                     <Link
                       href={href}
                       onClick={() => setMobileOpen(false)}

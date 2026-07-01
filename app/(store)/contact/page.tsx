@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Contact Us',
-  description: 'Get in touch with the Narya Kitchenware team — we\'re here to help.',
+  title: 'Contact Narya Kitchenware | Nairobi, Kenya',
+  description: 'Get in touch with the Narya Kitchenware team. Reach us by email, WhatsApp, or our contact form. We respond within 24 hours on business days. Based in Westlands, Nairobi, Kenya.',
 }
 
 const CHANNELS = [

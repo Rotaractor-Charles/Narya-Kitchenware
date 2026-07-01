@@ -336,7 +336,7 @@ export default function ProductForm({ product, mode }: { product?: Product; mode
           <span className="text-ivory/70">{mode === 'new' ? 'Add new product' : (name || 'Edit product')}</span>
         </div>
         {product && (
-          <Link href={`/products/${product.slug}`} target="_blank"
+          <Link href={`/product/${product.slug}`} target="_blank"
             className="text-xs text-ivory/30 hover:text-ivory/60 border border-white/10 rounded-lg px-3 py-1.5 transition-colors">
             Preview ↗
           </Link>
@@ -357,7 +357,7 @@ export default function ProductForm({ product, mode }: { product?: Product; mode
               className="w-full bg-transparent text-ivory text-xl placeholder:text-ivory/20 focus:outline-none border-b border-white/10 pb-3 mb-3 font-medium" />
             <div className="flex items-center gap-2 text-xs text-ivory/30">
               <span>Permalink:</span>
-              <span className="text-ivory/20">/products/</span>
+              <span className="text-ivory/20">/product/</span>
               <input value={slug} onChange={e => setSlug(e.target.value)}
                 className="bg-white/5 border border-white/10 rounded px-2 py-0.5 text-ivory/50 focus:outline-none focus:border-white/25 text-xs flex-1" />
             </div>
@@ -799,7 +799,7 @@ export default function ProductForm({ product, mode }: { product?: Product; mode
                 Save Draft
               </button>
               {product
-                ? <Link href={`/products/${product.slug}`} target="_blank"
+                ? <Link href={`/product/${product.slug}`} target="_blank"
                     className="flex-1 border border-white/10 text-ivory/35 hover:text-ivory/60 py-1.5 rounded-lg text-xs transition-colors text-center">
                     Preview
                   </Link>

@@ -89,6 +89,16 @@ function normalise(raw: ServerItem[]): CartItem[] {
     })
 }
 
+function mergeCartItems(current: CartItem[], serverItems: CartItem[]): CartItem[] {
+  if (current.length === 0) return serverItems
+  if (serverItems.length === 0) return current
+
+  const serverById = new Map(serverItems.map(item => [item.id, item]))
+  const currentOnly = current.filter(item => !serverById.has(item.id))
+
+  return [...serverItems, ...currentOnly]
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items,  setItems]  = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
@@ -117,10 +127,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchCart().then(serverItems => {
       if (serverItems === null) return
-      setItems(prev => {
-        if (prev.length === 0) return serverItems
-        return prev
-      })
+      setItems(prev => mergeCartItems(prev, serverItems))
     })
   }, [fetchCart])
 
@@ -152,9 +159,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
           )
         )
         const merged = await fetchCart()
-        if (merged !== null) setItems(merged)
+        if (merged !== null) setItems(prev => mergeCartItems(prev, merged))
       }
       addSyncQueueRef.current = addSyncQueueRef.current.then(syncGuestCart, syncGuestCart)
+    } else if (!nowAuthed) {
+      // Logout — clear cart immediately so previous user's items don't flash
+      setItems([])
     } else {
       fetchCart().then(fresh => { if (fresh !== null) setItems(fresh) })
     }
@@ -205,7 +215,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         })
 
         if (!r.ok) {
-          if (isLatestMutation()) {
+          if (r.status === 422 && isLatestMutation()) {
             setItems(prev => prev.filter(i => i.id !== itemId))
           }
           return
@@ -227,8 +237,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 }
               })
             }
-            return prev.filter(i => i.id !== itemId)
+            return prev
           })
+
+          if (!serverItem) {
+            const fresh = await fetchCart()
+            if (fresh !== null && isLatestMutation()) {
+              setItems(prev => mergeCartItems(prev, fresh))
+            }
+          }
         }
       } catch {
         // Keep optimistic state on network failure; next load reconciles.
@@ -236,7 +253,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     addSyncQueueRef.current = addSyncQueueRef.current.then(syncAdd, syncAdd)
-  }, [])
+  }, [fetchCart])
 
   const removeItem = useCallback((id: string) => {
     setItems(prev => {

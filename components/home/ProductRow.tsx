@@ -1,5 +1,10 @@
-import Link  from 'next/link'
-import Image from 'next/image'
+'use client'
+
+import Link    from 'next/link'
+import Image   from 'next/image'
+import { useState } from 'react'
+import { useCart }     from '@/lib/cart-context'
+import { useWishlist } from '@/lib/wishlist-context'
 import type { Product } from '@/lib/types'
 
 function Stars({ rating }: { rating: number }) {
@@ -21,18 +26,32 @@ function fmt(cents: number) {
   return `KSh ${(cents / 100).toLocaleString('en-KE', { minimumFractionDigits: 0 })}`
 }
 
-function DiscountBadge({ original, current }: { original: number; current: number }) {
-  const pct = Math.round(((original - current) / original) * 100)
-  return (
-    <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-      -{pct}%
-    </span>
-  )
-}
-
 function ProductCardEl({ product }: { product: Product }) {
+  const { addItem, openCart } = useCart()
+  const { ids, toggle }       = useWishlist()
+  const [added, setAdded]     = useState(false)
+
   const primaryImage = product.images?.find(i => i.is_primary) ?? product.images?.[0]
   const rating       = parseFloat(product.average_rating)
+  const wishlisted   = ids.has(product.id)
+
+  function handleAdd(e: React.MouseEvent) {
+    e.preventDefault()
+    if (added) return
+    addItem({
+      id:            product.slug,
+      slug:          product.slug,
+      name:          product.name,
+      image:         primaryImage?.url ?? '/products/placeholder.svg',
+      price:         product.price / 100,
+      originalPrice: product.compare_at_price ? product.compare_at_price / 100 : undefined,
+      productId:     product.id,
+      qty:           1,
+    })
+    openCart()
+    setAdded(true)
+    setTimeout(() => setAdded(false), 1500)
+  }
 
   return (
     <Link href={`/product/${product.slug}`} className="group block shrink-0 w-44 sm:w-52">
@@ -48,15 +67,48 @@ function ProductCardEl({ product }: { product: Product }) {
         ) : (
           <div className="w-full h-full bg-forest/5" />
         )}
+
         {product.compare_at_price && (
-          <DiscountBadge original={product.compare_at_price} current={product.price} />
+          <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+            -{Math.round(((product.compare_at_price - product.price) / product.compare_at_price) * 100)}%
+          </span>
         )}
         {product.stock_quantity > 0 && product.stock_quantity <= 5 && (
-          <span className="absolute bottom-2 left-2 bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded">
+          <span className="absolute bottom-10 left-2 bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded">
             Only {product.stock_quantity} left
           </span>
         )}
+
+        {/* Wishlist */}
+        <button
+          onClick={e => { e.preventDefault(); void toggle(product.id) }}
+          aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          className={`absolute top-2 right-2 p-1.5 rounded-full shadow-sm transition-colors ${
+            wishlisted
+              ? 'bg-red-50 text-red-500'
+              : 'bg-white/80 text-forest/30 hover:text-red-400 hover:bg-white'
+          }`}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24"
+            fill={wishlisted ? 'currentColor' : 'none'}
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </button>
+
+        {/* Add to cart — slides up on hover */}
+        <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+          <button
+            onClick={handleAdd}
+            className={`w-full py-2 text-xs font-semibold tracking-wide transition-colors duration-150 ${
+              added ? 'bg-sienna text-earth' : 'bg-earth text-ivory hover:bg-terra'
+            }`}
+          >
+            {added ? '✓ Added' : 'Add to Cart'}
+          </button>
+        </div>
       </div>
+
       <p className="text-xs text-forest leading-snug line-clamp-2 mb-1">{product.name}</p>
       <div className="flex items-baseline gap-1.5 mb-1">
         <span className="text-sm font-semibold text-forest">{fmt(product.price)}</span>

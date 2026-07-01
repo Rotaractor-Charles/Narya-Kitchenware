@@ -19,11 +19,14 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 Full architecture, spec, and decisions are in the companion docs:
 - `README.md` — how to build day to day (development rules, CI, deployment)
-- `kitchenware-ecommerce-spec.md` — full functional and technical specification
-- `CACHING.md` — authoritative caching framework
-- `DFD.md` — data flow diagrams
+- `docs/SPEC.md` — full functional and technical specification
+- `docs/CACHING.md` — authoritative caching framework
+- `docs/DFD.md` — data flow diagrams
+- `docs/SECURITY.md` — security guidelines, coding rules, and pre-deployment checklist
+- `docs/ONBOARDING.md` — new developer / maintainer setup guide
 
 **Read `README.md` at the start of every development task.**
+**Read `docs/SECURITY.md` before any task touching auth, user data, payments, file uploads, or admin.**
 
 ---
 

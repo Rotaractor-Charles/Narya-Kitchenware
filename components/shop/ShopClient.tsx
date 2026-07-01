@@ -119,6 +119,8 @@ export default function ShopClient({ products, categories, initialCategory = 'al
       list = [...list].sort((a, b) => b.id - a.id)
     } else if (category === 'sale') {
       list = list.filter((p) => p.compare_at_price && p.compare_at_price > p.price)
+    } else if (category === 'gift-sets') {
+      list = list.filter((p) => p.compare_at_price !== null || p.is_featured)
     } else if (category !== 'all') {
       list = list.filter((p) => p.category?.slug === category)
     }

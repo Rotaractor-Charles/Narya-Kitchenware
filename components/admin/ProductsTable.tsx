@@ -240,7 +240,7 @@ export default function ProductsTable({ products: initial }: { products: Product
                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Link href={`/admin/products/${p.id}`} className="text-blue-400/60 hover:text-blue-300 transition-colors">Edit</Link>
                         <span className="text-white/15">|</span>
-                        <Link href={`/products/${p.slug}`} target="_blank" className="text-blue-400/60 hover:text-blue-300 transition-colors">View</Link>
+                        <Link href={`/product/${p.slug}`} target="_blank" className="text-blue-400/60 hover:text-blue-300 transition-colors">View</Link>
                       </div>
                     </td>
                     <td className="px-3 py-3 text-ivory/25">—</td>

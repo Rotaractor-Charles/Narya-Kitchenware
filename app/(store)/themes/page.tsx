@@ -1,4 +1,4 @@
-export const metadata = { title: 'Theme Preview | Narya Kitchenware' }
+export const metadata = { title: 'Theme Preview | Narya Kitchenware', robots: { index: false } }
 
 const THEMES = [
   {

@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
+
+export const metadata: Metadata = { title: 'Order Details', robots: { index: false } }
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8000'
 

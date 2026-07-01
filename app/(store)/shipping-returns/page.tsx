@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Shipping & Returns',
-  description: 'Narya Kitchenware shipping rates, delivery times, and return policy.',
+  title: 'Shipping & Returns Policy | Narya Kitchenware Kenya',
+  description: 'Narya Kitchenware delivers to all 47 counties in Kenya. Nairobi orders in 1–2 days from KSh 200. Free delivery over KSh 7,500. 14-day free returns on unused items.',
 }
 
 export default function ShippingReturnsPage() {

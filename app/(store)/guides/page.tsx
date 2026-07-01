@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Care Guides',
-  description: 'How to clean, season, and maintain your Narya kitchenware so it lasts a lifetime.',
+  title: 'Kitchenware Care Guides | Season Cast Iron, Sharpen Knives & More — Narya',
+  description: 'Expert care guides for your kitchenware. Learn how to season cast iron, care for ceramic pans, sharpen knives, maintain wooden cutting boards and keep stainless steel gleaming. Built to last with the right care.',
 }
 
 const GUIDES = [

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { MenuItem } from '@/lib/api/menus'
 
 function LogoMark() {
   return (
@@ -19,33 +20,17 @@ function LogoMark() {
   )
 }
 
-const SHOP_LINKS = [
-  { href: '/shop',             label: 'All Products'       },
-  { href: '/shop/cookware',    label: 'Cookware'           },
-  { href: '/shop/bakeware',    label: 'Bakeware'           },
-  { href: '/shop/utensils',    label: 'Utensils'           },
-  { href: '/shop/storage',     label: 'Storage'            },
+const FALLBACK_LEARN: MenuItem[] = [
+  { id: 0, href: '/recipes', label: 'Recipes',     sort_order: 0, children: [] },
+  { id: 1, href: '/guides',  label: 'Care Guides', sort_order: 1, children: [] },
+  { id: 2, href: '/blog',    label: 'Blog',        sort_order: 2, children: [] },
 ]
 
-const LEARN_LINKS = [
-  { href: '/recipes', label: 'Recipes'     },
-  { href: '/guides',  label: 'Care Guides' },
-  { href: '/blog',    label: 'Blog'        },
-]
-
-const COMPANY_LINKS = [
-  { href: '/about',            label: 'About'              },
-  { href: '/contact',          label: 'Contact'            },
-  { href: '/shipping-returns', label: 'Shipping & Returns' },
-  { href: '/privacy',          label: 'Privacy Policy'     },
-  { href: '/terms',            label: 'Terms of Service'   },
-]
-
-function NavList({ links }: { links: { href: string; label: string }[] }) {
+function NavList({ links }: { links: { id: number; href: string; label: string }[] }) {
   return (
     <ul className="space-y-2 mt-2.5">
-      {links.map(({ href, label }) => (
-        <li key={href}>
+      {links.map(({ id, href, label }) => (
+        <li key={id}>
           <Link href={href} className="text-xs text-ivory/55 hover:text-ivory transition-colors duration-150">
             {label}
           </Link>
@@ -66,7 +51,34 @@ function ColHeading({ children }: { children: string }) {
   )
 }
 
-export default function Footer() {
+const FALLBACK_SHOP: MenuItem[] = [
+  { id: 0, label: 'All Products', href: '/shop',           sort_order: 0, children: [] },
+  { id: 1, label: 'Cookware',     href: '/shop/cookware',  sort_order: 1, children: [] },
+  { id: 2, label: 'Bakeware',     href: '/shop/bakeware',  sort_order: 2, children: [] },
+  { id: 3, label: 'Utensils',     href: '/shop/utensils',  sort_order: 3, children: [] },
+  { id: 4, label: 'Storage',      href: '/shop/storage',   sort_order: 4, children: [] },
+]
+
+const FALLBACK_COMPANY: MenuItem[] = [
+  { id: 0, label: 'About',             href: '/about',            sort_order: 0, children: [] },
+  { id: 1, label: 'Contact',           href: '/contact',          sort_order: 1, children: [] },
+  { id: 2, label: 'Shipping & Returns',href: '/shipping-returns', sort_order: 2, children: [] },
+  { id: 3, label: 'Privacy Policy',    href: '/privacy',          sort_order: 3, children: [] },
+  { id: 4, label: 'Terms of Service',  href: '/terms',            sort_order: 4, children: [] },
+]
+
+export default function Footer({
+  footerShop = [],
+  footerLearn = [],
+  footerCompany = [],
+}: {
+  footerShop?: MenuItem[]
+  footerLearn?: MenuItem[]
+  footerCompany?: MenuItem[]
+}) {
+  const shopLinks    = footerShop.length    > 0 ? footerShop    : FALLBACK_SHOP
+  const learnLinks   = footerLearn.length   > 0 ? footerLearn   : FALLBACK_LEARN
+  const companyLinks = footerCompany.length > 0 ? footerCompany : FALLBACK_COMPANY
   return (
     <footer className="bg-earth text-ivory/80 mt-24">
       <div className="max-w-7xl mx-auto px-6 pt-10 pb-7">
@@ -99,27 +111,19 @@ export default function Footer() {
           {/* Shop */}
           <div>
             <ColHeading>Shop</ColHeading>
-            <NavList links={SHOP_LINKS} />
+            <NavList links={shopLinks} />
           </div>
 
           {/* Learn */}
           <div>
             <ColHeading>Learn</ColHeading>
-            <NavList links={LEARN_LINKS} />
+            <NavList links={learnLinks} />
           </div>
 
           {/* Company */}
           <div>
             <ColHeading>Company</ColHeading>
-            <ul className="mt-2.5 grid grid-cols-1 gap-y-2">
-              {COMPANY_LINKS.map(({ href, label }) => (
-                <li key={href}>
-                  <Link href={href} className="text-xs text-ivory/55 hover:text-ivory transition-colors duration-150">
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <NavList links={companyLinks} />
           </div>
         </div>
 
